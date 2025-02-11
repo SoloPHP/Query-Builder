@@ -160,10 +160,13 @@ class QueryBuilder implements QueryBuilderInterface
             )->rowCount() > 0;
     }
 
-    public function update(array $data, string $primaryKey, mixed $id): bool
+    public function update(array $data, string $primaryKey, int|string $id): bool
     {
+        $placeholder = is_int($id) ? '?i' : '?s';
+        $query = "UPDATE ?t SET ?A WHERE ?c = {$placeholder}";
+
         return $this->db->query(
-                "UPDATE ?t SET ?A WHERE ?c = ?s",
+                $query,
                 $this->table,
                 $data,
                 $primaryKey,
@@ -171,10 +174,13 @@ class QueryBuilder implements QueryBuilderInterface
             )->rowCount() > 0;
     }
 
-    public function delete(string $primaryKey, mixed $id): bool
+    public function delete(string $primaryKey, int|string $id): bool
     {
+        $placeholder = is_int($id) ? '?i' : '?s';
+        $query = "DELETE FROM ?t WHERE ?c = {$placeholder}";
+
         return $this->db->query(
-                "DELETE FROM ?t WHERE ?c = ?s",
+                $query,
                 $this->table,
                 $primaryKey,
                 $id

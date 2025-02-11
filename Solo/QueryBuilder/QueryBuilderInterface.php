@@ -201,19 +201,19 @@ interface QueryBuilderInterface
      *
      * @param array $data Data to update.
      * @param string $primaryKey Primary key field name.
-     * @param mixed $id Record ID.
+     * @param int|string $id Record ID.
      * @return bool True on success.
      */
-    public function update(array $data, string $primaryKey, mixed $id): bool;
+    public function update(array $data, string $primaryKey, int|string $id): bool;
 
     /**
      * Delete a record by primary key.
      *
      * @param string $primaryKey Primary key field name.
-     * @param mixed $id Record ID.
+     * @param int|string $id Record ID.
      * @return bool True on success.
      */
-    public function delete(string $primaryKey, mixed $id): bool;
+    public function delete(string $primaryKey, int|string $id): bool;
 
     /**
      * Execute the query and fetch all results.

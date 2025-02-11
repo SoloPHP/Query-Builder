@@ -1,11 +1,11 @@
-# Solo Query Builder
+# Solo Query Builder 🛠
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/solophp/query-builder)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/solophp/query-builder)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 A flexible and secure SQL query builder for PHP, designed to simplify database interactions with enhanced condition logic.
 
-## Features
+## ✨ Features
 
 - **Fluent Interface**: Chainable methods for building complex queries.
 - **Parameter Binding**: Automatic prevention of SQL injection.
@@ -14,13 +14,13 @@ A flexible and secure SQL query builder for PHP, designed to simplify database i
 - **Condition Groups**: Group conditions using parentheses.
 - **Raw SQL**: Safely include raw SQL snippets.
 
-## Installation
+## 📥 Installation
 
 ```bash
 composer require solophp/query-builder
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Initialization
 
@@ -57,7 +57,7 @@ $qb->whereGroup(function ($q) {
 });
 ```
 
-## Complete Method Documentation
+## 📘 Complete Method Documentation
 
 ### Query Execution
 
@@ -101,12 +101,12 @@ $qb->update(['email' => 'new@example.com'], 'id', 42);
 // Delete
 $qb->delete('id', 42);
 ```
-## Requirements
+## ✅ Requirements
 
 - PHP 8.2+
 - [solophp/database](https://github.com/solophp/database) for database connections
 
-## License
+## 📄 License
 
 MIT License. See [LICENSE](LICENSE) for details.
 ```
