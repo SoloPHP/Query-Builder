@@ -24,6 +24,6 @@
     "php": "^8.2",
     "solophp/database": "^2.6"
   },
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
   "prefer-stable": true
 }
