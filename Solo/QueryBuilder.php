@@ -201,6 +201,11 @@ class QueryBuilder implements QueryBuilderInterface
         return $this->get()[0] ?? null;
     }
 
+    public function getIndexedBy(string $field): array
+    {
+        return array_column($this->get(), null, $field);
+    }
+
     public function count(): int
     {
         $originalSelect = $this->fields;

@@ -230,6 +230,14 @@ interface QueryBuilderInterface
     public function getOne(): ?array;
 
     /**
+     * Execute the query and fetch all results indexed by the specified field.
+     *
+     * @param string $field Field to use as array index.
+     * @return array Result set indexed by the specified field.
+     */
+    public function getIndexedBy(string $field): array;
+
+    /**
      * Get the total count of records matching the query conditions.
      *
      * Does not modify the current builder state — all changes are temporary
