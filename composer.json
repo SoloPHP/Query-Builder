@@ -1,0 +1,29 @@
+{
+  "name": "solophp/query-builder",
+  "description": "A lightweight, fluent SQL query builder for PHP, providing secure and intuitive database interactions.",
+  "type": "library",
+  "keywords": [
+    "query builder",
+    "database",
+    "pdo",
+    "sql"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Vitaliy Olos",
+      "email": "vedastudio@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Solo\\": "Solo/"
+    }
+  },
+  "require": {
+    "php": "^8.2",
+    "solophp/database": "^2.8"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

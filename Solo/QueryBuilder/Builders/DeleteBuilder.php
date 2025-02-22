@@ -1,0 +1,61 @@
+<?php declare(strict_types=1);
+
+namespace Solo\QueryBuilder\Builders;
+
+use Solo\Database;
+use Solo\QueryBuilder\Components\ConditionBuilder;
+
+final class DeleteBuilder
+{
+    private Database $db;
+    private string $table;
+    private ConditionBuilder $conditionBuilder;
+
+    public function __construct(Database $db, string $table)
+    {
+        $this->db = $db;
+        $this->table = $table;
+        $this->conditionBuilder = new ConditionBuilder();
+    }
+
+    public function alias(string $alias): self
+    {
+        $this->conditionBuilder = new ConditionBuilder($alias);
+        return $this;
+    }
+
+    public function where(string $field, string $operator, mixed $value = null): self
+    {
+        return $this->andWhere($field, $operator, $value);
+    }
+
+    public function andWhere(string $field, string $operator, mixed $value = null): self
+    {
+        $this->conditionBuilder->andWhere($field, $operator, $value);
+        return $this;
+    }
+
+    public function orWhere(string $field, string $operator, mixed $value = null): self
+    {
+        $this->conditionBuilder->orWhere($field, $operator, $value);
+        return $this;
+    }
+
+    public function toSql(): string
+    {
+        $where = $this->conditionBuilder->hasConditions()
+            ? ' WHERE ' . $this->conditionBuilder->build()
+            : '';
+
+        return $this->db->prepare(
+            "DELETE FROM ?t{$where}",
+            $this->table,
+            ...$this->conditionBuilder->getBindings()
+        );
+    }
+
+    public function execute(): int
+    {
+        return $this->db->query($this->toSql())->rowCount();
+    }
+}
