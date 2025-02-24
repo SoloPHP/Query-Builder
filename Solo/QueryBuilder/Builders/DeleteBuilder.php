@@ -43,14 +43,14 @@ final class DeleteBuilder
 
     public function toSql(): string
     {
-        $where = $this->conditionBuilder->hasConditions()
-            ? ' WHERE ' . $this->conditionBuilder->build()
+        $where = $this->conditionBuilder->hasWhereConditions()
+            ? ' WHERE ' . $this->conditionBuilder->buildWhere()
             : '';
 
         return $this->db->prepare(
             "DELETE FROM ?t{$where}",
             $this->table,
-            ...$this->conditionBuilder->getBindings()
+            ...$this->conditionBuilder->getWhereBindings()
         );
     }
 

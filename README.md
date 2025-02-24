@@ -1,6 +1,6 @@
 # Solo Query Builder 🛠
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/solophp/query-builder)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/solophp/query-builder)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 A lightweight, fluent SQL query builder for PHP, providing secure and intuitive database interactions.
@@ -14,6 +14,7 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **Condition Groups**: Complex `WHERE` clauses with closures.
 - **Join Clauses**: `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN` support.
 - **Raw SQL**: Safely insert raw SQL snippets when needed.
+- **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
 
 ## 📥 Installation
 
@@ -86,7 +87,7 @@ $qb->select()
     ->get();
 ~~~
 
-### Complex Conditions
+### Using WHERE
 
 ~~~php
 $qb->select()
@@ -97,6 +98,21 @@ $qb->select()
     })
     ->get();
 ~~~
+
+### Using HAVING
+
+You can add `HAVING` conditions similarly to `WHERE`. For example, if you want to find categories with more than 10 products:
+
+~~~php
+$results = $qb
+    ->select(['p.category', 'COUNT(p.id) AS total'])
+    ->from('products|p')
+    ->groupBy('p.category')
+    ->having('total', '>', 10)
+    ->get();
+~~~
+
+You can also chain multiple conditions, use `andHavingGroup()`, `orHaving()`, etc., just like with `WHERE`.
 
 ## 📘 API Reference
 
@@ -111,29 +127,38 @@ $qb->select()
 
 ### Query Methods (SELECT)
 
-| Method                                          | Description                                         |
-|-------------------------------------------------|-----------------------------------------------------|
-| `from(string $table)`                           | Specify the table and optional alias.               |
-| `distinct(bool $distinct = true)`               | Use `SELECT DISTINCT`.                              |
-| `join(string $table, string $condition, string $type)` | Add a JOIN clause (INNER/LEFT/RIGHT).        |
-| `leftJoin(string $table, string $condition)`    | Add a LEFT JOIN clause.                             |
-| `rightJoin(string $table, string $condition)`   | Add a RIGHT JOIN clause.                            |
-| `innerJoin(string $table, string $condition)`   | Add an INNER JOIN clause.                           |
-| `where(string $field, string $operator, mixed $value)` | Basic WHERE condition.                     |
-| `andWhere(string $field, string $operator, mixed $value)` | AND condition (chained).                    |
-| `orWhere(string $field, string $operator, mixed $value)`  | OR condition.                                |
-| `whereBetween(string $field, mixed $start, mixed $end)`   | WHERE BETWEEN condition.                     |
-| `whereGroup(Closure $callback)`                 | Group multiple conditions via a closure.            |
-| `groupBy(string $field)`                        | GROUP BY a specified field.                         |
-| `orderBy(string $field, string $direction)`     | ORDER BY clause.                                    |
-| `addOrderBy(string $field, string $direction)`  | Add additional order criteria.                      |
+| Method                                                  | Description                                                                |
+|---------------------------------------------------------|----------------------------------------------------------------------------|
+| `from(string $table)`                                   | Specify the table and optional alias.                                      |
+| `distinct(bool $distinct = true)`                       | Use `SELECT DISTINCT`.                                                     |
+| `join(string $table, string $condition, string $type)`  | Add a JOIN clause (INNER / LEFT / RIGHT).                                  |
+| `leftJoin(string $table, string $condition)`            | Add a LEFT JOIN clause.                                                    |
+| `rightJoin(string $table, string $condition)`           | Add a RIGHT JOIN clause.                                                   |
+| `innerJoin(string $table, string $condition)`           | Add an INNER JOIN clause.                                                  |
+| `where(string $field, string $operator, mixed $value)`  | Basic WHERE condition.                                                     |
+| `andWhere(string $field, string $operator, mixed $value)` | AND condition (chained).                                                  |
+| `orWhere(string $field, string $operator, mixed $value)`  | OR condition.                                                              |
+| `whereBetween(string $field, mixed $start, mixed $end)` | WHERE BETWEEN condition.                                                   |
+| `whereRaw(string $sql, array $bindings = [])`           | Insert a raw SQL snippet in WHERE.                                         |
+| `whereGroup(Closure $callback)`                         | Group multiple conditions via a closure.                                   |
+| `groupBy(string $field)`                                | GROUP BY a specified field.                                                |
+| `having(string $field, string $operator, mixed $value)` | HAVING condition (works like `where`).                                     |
+| `andHaving(string $field, string $operator, mixed $value)` | AND condition for HAVING.                                                |
+| `orHaving(string $field, string $operator, mixed $value)`  | OR condition for HAVING.                                                 |
+| `havingBetween(string $field, mixed $start, mixed $end)`  | HAVING BETWEEN condition.                                                |
+| `havingRaw(string $sql, array $bindings = [])`          | Insert a raw SQL snippet in HAVING.                                        |
+| `havingGroup(Closure $callback)`                        | Group multiple HAVING conditions via a closure.                            |
+| `orderBy(string $field, string $direction)`             | ORDER BY clause.                                                           |
+| `addOrderBy(string $field, string $direction)`          | Add additional order criteria.                                             |
+| `limit(int $limit, int $offset = 0)`                    | Limit and offset for pagination.                                           |
+| `paginate(int $page, int $limit)`                       | Paginate by page number.                                                  |
 
 ### Execution & Results
 
 | Method                                       | Description                                                |
 |----------------------------------------------|------------------------------------------------------------|
-| `get()`                                      | Execute SELECT and return all rows.                        |
-| `getOne()`                                   | Execute SELECT with `LIMIT 1` and return a single row.     |
+| `get(?int $fetchMode = null)`                | Execute SELECT and return all rows.                        |
+| `getOne(?int $fetchMode = null)`             | Execute SELECT with `LIMIT 1` and return a single row.     |
 | `getIndexedBy(string $field)`                | Return an associative array indexed by a specific field.   |
 | `count()`                                    | Execute a `SELECT COUNT(*)` using the current conditions.  |
 | `execute()`                                  | Execute `INSERT`, `UPDATE`, or `DELETE`.                   |
@@ -159,7 +184,7 @@ $total = $qb->select()
     ->count();
 ~~~
 
-**Complex Grouping:**
+**Complex Grouping with WHERE:**
 
 ~~~php
 $results = $qb->select()
@@ -168,6 +193,16 @@ $results = $qb->select()
         $builder->where('status', '=', 'pending')
                 ->orWhere('priority', '>', 5);
     })
+    ->get();
+~~~
+
+**Using HAVING:**
+
+~~~php
+$results = $qb->select(['p.category', 'COUNT(p.id) AS total'])
+    ->from('products|p')
+    ->groupBy('p.category')
+    ->having('total', '>', 10)
     ->get();
 ~~~
 

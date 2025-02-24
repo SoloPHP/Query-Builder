@@ -34,15 +34,26 @@ final class CountBuilder
     public function toSql(): string
     {
         $select = "SELECT COUNT(*) AS count";
-        $from = " FROM ?t AS ?c";
-        $joins = $this->joins ? ' ' . implode(' ', $this->joins) : '';
-        $where = $this->conditionBuilder->hasConditions()
-            ? ' WHERE ' . $this->conditionBuilder->build()
-            : '';
-        $group = $this->groupBy ? ' ' . $this->groupBy : '';
+        $from   = " FROM ?t AS ?c";
+        $joins  = $this->joins ? ' ' . implode(' ', $this->joins) : '';
 
-        $rawSql = "$select$from$joins$where$group";
-        $params = array_merge([$this->table, $this->alias], $this->conditionBuilder->getBindings());
+        $where  = $this->conditionBuilder->hasWhereConditions()
+            ? ' WHERE ' . $this->conditionBuilder->buildWhere()
+            : '';
+
+        $group  = $this->groupBy ? ' ' . $this->groupBy : '';
+
+        $having = $this->conditionBuilder->hasHavingConditions()
+            ? ' HAVING ' . $this->conditionBuilder->buildHaving()
+            : '';
+
+        $rawSql = "$select$from$joins$where$group$having";
+
+        $params = array_merge(
+            [$this->table, $this->alias],
+            $this->conditionBuilder->getWhereBindings(),
+            $this->conditionBuilder->getHavingBindings()
+        );
 
         return $this->db->prepare($rawSql, ...$params);
     }

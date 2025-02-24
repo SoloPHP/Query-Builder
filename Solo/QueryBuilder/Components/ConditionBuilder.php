@@ -11,14 +11,20 @@ final class ConditionBuilder
     private const VALUE_OPERATORS = ['=', '>', '<', '>=', '<=', '<>', '!=', 'LIKE', 'IN', 'BETWEEN'];
     private const NULL_OPERATORS = ['IS NULL', 'IS NOT NULL', 'IS TRUE', 'IS FALSE', 'IS NOT TRUE', 'IS NOT FALSE'];
 
-    private array $conditions = [];
-    private array $bindings = [];
     private string $alias;
+    private array $whereConditions = [];
+    private array $whereBindings = [];
+    private array $havingConditions = [];
+    private array $havingBindings = [];
 
     public function __construct(string $alias = '')
     {
         $this->alias = $alias;
     }
+
+    /*------------------------------------------------------------------------*
+     *                     WHERE-section
+     *------------------------------------------------------------------------*/
 
     public function where(string $field, string $operator, mixed $value = null): self
     {
@@ -27,26 +33,26 @@ final class ConditionBuilder
 
     public function andWhere(string $field, string $operator, mixed $value = null): self
     {
-        $this->addCondition('AND', $field, $operator, $value);
+        $this->addWhereCondition('AND', $field, $operator, $value);
         return $this;
     }
 
     public function orWhere(string $field, string $operator, mixed $value = null): self
     {
-        $this->addCondition('OR', $field, $operator, $value);
+        $this->addWhereCondition('OR', $field, $operator, $value);
         return $this;
     }
 
     public function andBetween(string $field, mixed $start, mixed $end): self
     {
-        $this->addCondition('AND', $field, 'BETWEEN', [$start, $end]);
+        $this->addWhereCondition('AND', $field, 'BETWEEN', [$start, $end]);
         return $this;
     }
 
     public function andRaw(string $sql, array $bindings = []): self
     {
-        $this->conditions[] = ['AND', $sql];
-        array_push($this->bindings, ...$bindings);
+        $this->whereConditions[] = ['AND', $sql];
+        array_push($this->whereBindings, ...$bindings);
         return $this;
     }
 
@@ -55,38 +61,138 @@ final class ConditionBuilder
         $groupBuilder = new self($this->alias);
         $callback($groupBuilder);
 
-        $this->conditions[] = ['AND', '(' . $groupBuilder->build() . ')'];
-        array_push($this->bindings, ...$groupBuilder->getBindings());
+        $groupSql = $groupBuilder->buildWhere();
+        if ($groupSql !== '') {
+            $this->whereConditions[] = ['AND', '(' . $groupSql . ')'];
+            array_push($this->whereBindings, ...$groupBuilder->getWhereBindings());
+        }
+
         return $this;
     }
 
-    public function build(): string
+    public function buildWhere(): string
     {
-        $parts = [];
-        foreach ($this->conditions as $index => [$logic, $clause]) {
-            $parts[] = ($index > 0 ? $logic . ' ' : '') . $clause;
+        return $this->buildGeneric($this->whereConditions);
+    }
+
+    public function getWhereBindings(): array
+    {
+        return $this->whereBindings;
+    }
+
+    public function hasWhereConditions(): bool
+    {
+        return !empty($this->whereConditions);
+    }
+
+    /*------------------------------------------------------------------------*
+     *                     HAVING-section
+     *------------------------------------------------------------------------*/
+
+    public function having(string $field, string $operator, mixed $value = null): self
+    {
+        return $this->andHaving($field, $operator, $value);
+    }
+
+    public function andHaving(string $field, string $operator, mixed $value = null): self
+    {
+        $this->addHavingCondition('AND', $field, $operator, $value);
+        return $this;
+    }
+
+    public function orHaving(string $field, string $operator, mixed $value = null): self
+    {
+        $this->addHavingCondition('OR', $field, $operator, $value);
+        return $this;
+    }
+
+    public function andHavingBetween(string $field, mixed $start, mixed $end): self
+    {
+        $this->addHavingCondition('AND', $field, 'BETWEEN', [$start, $end]);
+        return $this;
+    }
+
+    public function andHavingRaw(string $sql, array $bindings = []): self
+    {
+        $this->havingConditions[] = ['AND', $sql];
+        array_push($this->havingBindings, ...$bindings);
+        return $this;
+    }
+
+    public function andHavingGroup(Closure $callback): self
+    {
+        $groupBuilder = new self($this->alias);
+        $callback($groupBuilder);
+
+        $groupSql = $groupBuilder->buildHaving();
+        if ($groupSql !== '') {
+            $this->havingConditions[] = ['AND', '(' . $groupSql . ')'];
+            array_push($this->havingBindings, ...$groupBuilder->getHavingBindings());
         }
+
+        return $this;
+    }
+
+    public function buildHaving(): string
+    {
+        return $this->buildGeneric($this->havingConditions);
+    }
+
+    public function getHavingBindings(): array
+    {
+        return $this->havingBindings;
+    }
+
+    public function hasHavingConditions(): bool
+    {
+        return !empty($this->havingConditions);
+    }
+
+    /*------------------------------------------------------------------------*
+    *                     Helper methods
+    *------------------------------------------------------------------------*/
+
+    private function buildGeneric(array $conditions): string
+    {
+        if (empty($conditions)) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ($conditions as $index => [$logic, $clause]) {
+            $prefix = ($index > 0) ? $logic . ' ' : '';
+            $parts[] = $prefix . $clause;
+        }
+
         return implode(' ', $parts);
     }
 
-    public function getBindings(): array
-    {
-        return $this->bindings;
-    }
-
-    public function hasConditions(): bool
-    {
-        return !empty($this->conditions);
-    }
-
-    private function addCondition(string $logic, string $field, string $operator, mixed $value): void
+    private function addWhereCondition(string $logic, string $field, string $operator, mixed $value): void
     {
         $operator = strtoupper(trim($operator));
         $this->validateOperator($operator);
 
         $processed = $this->processCondition($field, $operator, $value);
-        $this->conditions[] = [$logic, $processed['clause']];
-        array_push($this->bindings, ...$processed['bindings']);
+        $this->whereConditions[] = [$logic, $processed['clause']];
+        array_push($this->whereBindings, ...$processed['bindings']);
+    }
+
+    private function addHavingCondition(string $logic, string $field, string $operator, mixed $value): void
+    {
+        $operator = strtoupper(trim($operator));
+        $this->validateOperator($operator);
+
+        $processed = $this->processCondition($field, $operator, $value);
+        $this->havingConditions[] = [$logic, $processed['clause']];
+        array_push($this->havingBindings, ...$processed['bindings']);
+    }
+
+    private function validateOperator(string $operator): void
+    {
+        $allowed = array_merge(self::VALUE_OPERATORS, self::NULL_OPERATORS);
+        if (!in_array($operator, $allowed)) {
+            throw new QueryBuilderException("Invalid operator: $operator");
+        }
     }
 
     private function processCondition(string $field, string $operator, mixed $value): array
@@ -94,7 +200,10 @@ final class ConditionBuilder
         $field = $this->applyAliasToField($field);
 
         if (in_array($operator, self::NULL_OPERATORS)) {
-            return ['clause' => "$field $operator", 'bindings' => []];
+            return [
+                'clause' => "$field $operator",
+                'bindings' => []
+            ];
         }
 
         if ($operator === 'IN') {
@@ -105,9 +214,13 @@ final class ConditionBuilder
         }
 
         if ($operator === 'BETWEEN') {
+            $arr = is_array($value) ? array_values($value) : (array)$value;
+            if (count($arr) !== 2) {
+                throw new QueryBuilderException("BETWEEN operator expects 2 values.");
+            }
             return [
                 'clause' => "$field BETWEEN ?s AND ?s",
-                'bindings' => array_values((array)$value),
+                'bindings' => $arr,
             ];
         }
 
@@ -125,13 +238,12 @@ final class ConditionBuilder
         ];
     }
 
-    public function applyAlias(string $field, ?string $contextAlias = null): string
+    private function applyAliasToField(string $field): string
     {
-        $alias = $contextAlias ?? $this->alias;
-        if (!$alias || str_contains($field, '.')) {
+        if (!$this->alias || str_contains($field, '.')) {
             return $field;
         }
-        return "$alias.$field";
+        return $this->alias . '.' . $field;
     }
 
     private function detectPlaceholder(mixed $value): string
@@ -143,21 +255,5 @@ final class ConditionBuilder
             is_array($value) => '?a',
             default => '?s',
         };
-    }
-
-    private function applyAliasToField(string $field): string
-    {
-        if (str_contains($field, '.')) {
-            return $field;
-        }
-        return $this->alias ? "$this->alias.$field" : $field;
-    }
-
-    private function validateOperator(string $operator): void
-    {
-        $allowed = array_merge(self::VALUE_OPERATORS, self::NULL_OPERATORS);
-        if (!in_array($operator, $allowed)) {
-            throw new QueryBuilderException("Invalid operator: $operator");
-        }
     }
 }

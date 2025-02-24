@@ -44,15 +44,15 @@ final class UpdateBuilder
 
     public function toSql(): string
     {
-        $where = $this->conditionBuilder->hasConditions()
-            ? ' WHERE ' . $this->conditionBuilder->build()
+        $where = $this->conditionBuilder->hasWhereConditions()
+            ? ' WHERE ' . $this->conditionBuilder->buildWhere()
             : '';
 
         return $this->db->prepare(
             "UPDATE ?t SET ?A{$where}",
             $this->table,
             $this->data,
-            ...$this->conditionBuilder->getBindings()
+            ...$this->conditionBuilder->getWhereBindings()
         );
     }
 

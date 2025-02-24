@@ -2,13 +2,13 @@
 
 namespace Solo\QueryBuilder\Builders;
 
+use Closure;
+use stdClass;
 use Solo\Database;
 use Solo\QueryBuilder\Components\ConditionBuilder;
 use Solo\QueryBuilder\Builders\CountBuilder;
 use Solo\QueryBuilder\Exceptions\QueryBuilderException;
 use Solo\QueryBuilder\Traits\TableParserTrait;
-use Closure;
-use stdClass;
 
 final class SelectBuilder
 {
@@ -20,6 +20,7 @@ final class SelectBuilder
     private string $alias = '';
     private array $joins = [];
     private ConditionBuilder $conditionBuilder;
+
     private array $orderBy = [];
     private string $groupBy = '';
     private string $limit = '';
@@ -50,6 +51,7 @@ final class SelectBuilder
         $this->table = $tableName;
         $this->alias = $alias;
         $this->conditionBuilder = new ConditionBuilder($alias);
+
         return $this;
     }
 
@@ -76,29 +78,30 @@ final class SelectBuilder
         return $this->join($table, $condition, 'RIGHT');
     }
 
+    /*------------------------------------------------------------------------*
+     *                     WHERE
+     *------------------------------------------------------------------------*/
     public function where(string $field, string $operator, mixed $value = null): self
     {
-        return $this->andWhere($field, $operator, $value);
+        $this->conditionBuilder->where($field, $operator, $value);
+        return $this;
     }
 
     public function andWhere(string $field, string $operator, mixed $value = null): self
     {
-        $processedField = $this->applyAliasToField($field);
-        $this->conditionBuilder->andWhere($processedField, $operator, $value);
+        $this->conditionBuilder->andWhere($field, $operator, $value);
         return $this;
     }
 
     public function orWhere(string $field, string $operator, mixed $value = null): self
     {
-        $processedField = $this->applyAliasToField($field);
-        $this->conditionBuilder->orWhere($processedField, $operator, $value);
+        $this->conditionBuilder->orWhere($field, $operator, $value);
         return $this;
     }
 
     public function whereBetween(string $field, mixed $start, mixed $end): self
     {
-        $processedField = $this->applyAliasToField($field);
-        $this->conditionBuilder->andBetween($processedField, $start, $end);
+        $this->conditionBuilder->andBetween($field, $start, $end);
         return $this;
     }
 
@@ -114,6 +117,57 @@ final class SelectBuilder
         return $this;
     }
 
+    /*------------------------------------------------------------------------*
+     *                     HAVING
+     *------------------------------------------------------------------------*/
+    public function having(string $field, string $operator, mixed $value = null): self
+    {
+        $this->conditionBuilder->having($field, $operator, $value);
+        return $this;
+    }
+
+    public function andHaving(string $field, string $operator, mixed $value = null): self
+    {
+        $this->conditionBuilder->andHaving($field, $operator, $value);
+        return $this;
+    }
+
+    public function orHaving(string $field, string $operator, mixed $value = null): self
+    {
+        $this->conditionBuilder->orHaving($field, $operator, $value);
+        return $this;
+    }
+
+    public function havingBetween(string $field, mixed $start, mixed $end): self
+    {
+        $this->conditionBuilder->andHavingBetween($field, $start, $end);
+        return $this;
+    }
+
+    public function havingRaw(string $sql, array $bindings = []): self
+    {
+        $this->conditionBuilder->andHavingRaw($sql, $bindings);
+        return $this;
+    }
+
+    public function havingGroup(Closure $callback): self
+    {
+        $this->conditionBuilder->andHavingGroup($callback);
+        return $this;
+    }
+
+    /*------------------------------------------------------------------------*
+    *                     GROUP BY, ORDER BY, LIMIT
+    *------------------------------------------------------------------------*/
+    public function groupBy(string $field): self
+    {
+        if ($this->alias && !str_contains($field, '.')) {
+            $field = "{$this->alias}.{$field}";
+        }
+        $this->groupBy = "GROUP BY $field";
+        return $this;
+    }
+
     public function orderBy(string $field, string $direction = 'ASC'): self
     {
         $this->orderBy[] = [$field, $direction];
@@ -123,13 +177,6 @@ final class SelectBuilder
     public function addOrderBy(string $field, string $direction = 'ASC'): self
     {
         return $this->orderBy($field, $direction);
-    }
-
-    public function groupBy(string $field): self
-    {
-        $field = $this->conditionBuilder->applyAlias($field, $this->alias);
-        $this->groupBy = "GROUP BY $field";
-        return $this;
     }
 
     public function limit(int $limit, int $offset = 0): self
@@ -147,6 +194,9 @@ final class SelectBuilder
         return $this->limit($limit, $offset);
     }
 
+    /*------------------------------------------------------------------------*
+     *                     EXECUTING QUERIES
+     *------------------------------------------------------------------------*/
     public function get(?int $fetchMode = null): array
     {
         if (empty($this->table)) {
@@ -186,20 +236,40 @@ final class SelectBuilder
         return $this->toCountBuilder()->getValue();
     }
 
+    /*------------------------------------------------------------------------*
+     *                     SQL ASSEMBLY
+     *------------------------------------------------------------------------*/
     public function toSql(): string
     {
-        $select  = $this->buildSelectClause();
-        $from    = " FROM ?t AS ?c";
-        $joins   = $this->joins ? ' ' . implode(' ', $this->joins) : '';
-        $where   = $this->conditionBuilder->hasConditions()
-            ? ' WHERE ' . $this->conditionBuilder->build()
-            : '';
-        $group   = $this->groupBy ? ' ' . $this->groupBy : '';
-        $order   = $this->buildOrderByClause();
-        $limit   = $this->limit ? " $this->limit" : '';
+        $select = $this->buildSelectClause();
+        $from = " FROM ?t AS ?c";
+        $joins = $this->joins ? ' ' . implode(' ', $this->joins) : '';
 
-        $rawSql  = "$select$from$joins$where$group$order$limit";
-        $params  = array_merge([$this->table, $this->alias], $this->conditionBuilder->getBindings());
+        $where = '';
+        if ($this->conditionBuilder->hasWhereConditions()) {
+            $whereSql = $this->conditionBuilder->buildWhere();
+            $where = " WHERE $whereSql";
+        }
+
+        $group = $this->groupBy ? ' ' . $this->groupBy : '';
+
+        $having = '';
+        if ($this->conditionBuilder->hasHavingConditions()) {
+            $havingSql = $this->conditionBuilder->buildHaving();
+            $having = " HAVING $havingSql";
+        }
+
+        $order = $this->buildOrderByClause();
+
+        $limit = $this->limit ? " $this->limit" : '';
+
+        $rawSql = "$select$from$joins$where$group$having$order$limit";
+
+        $params = array_merge(
+            [$this->table, $this->alias],
+            $this->conditionBuilder->getWhereBindings(),
+            $this->conditionBuilder->getHavingBindings()
+        );
 
         return $this->db->prepare($rawSql, ...$params);
     }
@@ -216,10 +286,12 @@ final class SelectBuilder
         if (empty($this->orderBy)) {
             return '';
         }
-
         $parts = [];
         foreach ($this->orderBy as [$field, $direction]) {
-            $parts[] = $this->applyAliasToField($field) . ' ' . strtoupper($direction);
+            if ($this->alias && !str_contains($field, '.')) {
+                $field = "{$this->alias}.{$field}";
+            }
+            $parts[] = $field . ' ' . strtoupper($direction);
         }
         return ' ORDER BY ' . implode(', ', $parts);
     }
@@ -227,21 +299,16 @@ final class SelectBuilder
     private function processField(string $field): string
     {
         if ($field === '*') {
-            return $this->alias ? "$this->alias.*" : '*';
+            return $this->alias ? "{$this->alias}.*" : '*';
         }
 
         if (preg_match('/\b(COUNT|SUM|AVG|MIN|MAX)\s*\(/i', $field)) {
             return $field;
         }
 
-        return $this->applyAliasToField($field);
-    }
-
-    private function applyAliasToField(string $field): string
-    {
-        if (str_contains($field, '.')) {
-            return $field;
+        if ($this->alias && !str_contains($field, '.')) {
+            return "{$this->alias}.{$field}";
         }
-        return $this->alias ? "$this->alias.$field" : $field;
+        return $field;
     }
 }
