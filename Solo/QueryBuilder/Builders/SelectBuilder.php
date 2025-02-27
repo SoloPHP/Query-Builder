@@ -168,8 +168,17 @@ final class SelectBuilder
         return $this;
     }
 
-    public function orderBy(string $field, string $direction = 'ASC'): self
+    public function orderBy(?string $field, ?string $direction): self
     {
+        if (!$field) {
+            return $this;
+        }
+
+        $direction = strtoupper($direction ?? 'ASC');
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            $direction = 'ASC';
+        }
+
         $this->orderBy[] = [$field, $direction];
         return $this;
     }
@@ -192,6 +201,41 @@ final class SelectBuilder
     {
         $offset = ($page - 1) * $limit;
         return $this->limit($limit, $offset);
+    }
+
+    /*------------------------------------------------------------------------*
+     *                     SEARCH
+     *------------------------------------------------------------------------*/
+
+    public function search(?string $search, array $searchableFields = []): self
+    {
+        if (!$search || empty($searchableFields)) {
+            return $this;
+        }
+
+        $field = $searchableFields[0];
+        $value = $search;
+
+        if (str_contains($search, ':')) {
+            [$f, $v] = explode(':', $search, 2);
+
+            if (!in_array($f, $searchableFields, true)) {
+                return $this;
+            }
+
+            $field = $f;
+            $value = $v;
+        }
+
+        foreach (explode(' ', $value) as $kw) {
+            $kw = trim($kw);
+            if ($kw === '') {
+                continue;
+            }
+            $this->conditionBuilder->andWhere($field, 'LIKE', $kw);
+        }
+
+        return $this;
     }
 
     /*------------------------------------------------------------------------*

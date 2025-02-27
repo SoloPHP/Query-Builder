@@ -1,6 +1,6 @@
 # Solo Query Builder 🛠
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/solophp/query-builder)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/solophp/query-builder)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 A lightweight, fluent SQL query builder for PHP, providing secure and intuitive database interactions.
@@ -15,6 +15,7 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **Join Clauses**: `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN` support.
 - **Raw SQL**: Safely insert raw SQL snippets when needed.
 - **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
+- **Search Functionality**: Easily implement search with keywords across fields.
 
 ## 📥 Installation
 
@@ -114,6 +115,30 @@ $results = $qb
 
 You can also chain multiple conditions, use `andHavingGroup()`, `orHaving()`, etc., just like with `WHERE`.
 
+### Using Search
+
+The search method provides a convenient way to search for keywords in specific fields:
+
+```php
+$results = $qb
+    ->select()
+    ->from('products|p')
+    ->search('laptop', ['p.name', 'p.description'])
+    ->get();
+```
+
+You can also search in a specific field using a colon syntax:
+
+```php
+$results = $qb
+    ->select()
+    ->from('products|p')
+    ->search('name:gaming laptop', ['p.name', 'p.description', 'p.category'])
+    ->get();
+```
+
+The search functionality supports multiple keywords (space-separated) and will apply them with an AND condition.
+
 ## 📘 API Reference
 
 ### Core Methods
@@ -148,10 +173,11 @@ You can also chain multiple conditions, use `andHavingGroup()`, `orHaving()`, et
 | `havingBetween(string $field, mixed $start, mixed $end)`  | HAVING BETWEEN condition.                                                |
 | `havingRaw(string $sql, array $bindings = [])`          | Insert a raw SQL snippet in HAVING.                                        |
 | `havingGroup(Closure $callback)`                        | Group multiple HAVING conditions via a closure.                            |
-| `orderBy(string $field, string $direction)`             | ORDER BY clause.                                                           |
+| `orderBy(?string $field, ?string $direction)`             | ORDER BY clause. Safe to pass null values.                               |
 | `addOrderBy(string $field, string $direction)`          | Add additional order criteria.                                             |
 | `limit(int $limit, int $offset = 0)`                    | Limit and offset for pagination.                                           |
-| `paginate(int $page, int $limit)`                       | Paginate by page number.                                                  |
+| `paginate(int $page, int $limit)`                       | Paginate by page number.                                                   |
+| `search(?string $search, array $searchableFields)`      | Add search conditions with multiple keywords support.                      |
 
 ### Execution & Results
 
@@ -204,7 +230,23 @@ $results = $qb->select(['p.category', 'COUNT(p.id) AS total'])
     ->groupBy('p.category')
     ->having('total', '>', 10)
     ->get();
-~~~
+```
+
+**Using Search:**
+
+```php
+// Search for "phone" in name, description, and tags fields
+$results = $qb->select()
+    ->from('products|p')
+    ->search('phone', ['p.name', 'p.description', 'p.tags'])
+    ->get();
+
+// Search for "premium" in only the category field
+$results = $qb->select()
+    ->from('products|p')
+    ->search('category:premium', ['p.name', 'p.category', 'p.tags'])
+    ->get();
+```
 
 ## ✅ Requirements
 
