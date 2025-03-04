@@ -168,13 +168,13 @@ final class SelectBuilder
         return $this;
     }
 
-    public function orderBy(?string $field, ?string $direction): self
+    public function orderBy(?string $field, string $direction = 'ASC'): self
     {
         if (!$field) {
             return $this;
         }
 
-        $direction = strtoupper($direction ?? 'ASC');
+        $direction = strtoupper($direction);
         if (!in_array($direction, ['ASC', 'DESC'], true)) {
             $direction = 'ASC';
         }
