@@ -207,14 +207,11 @@ final class SelectBuilder
      *                     SEARCH
      *------------------------------------------------------------------------*/
 
-    public function search(?string $search, array $searchableFields = []): self
+    public function search(?string $search, array $searchableFields = [], array $fieldMap = []): self
     {
         if (!$search || empty($searchableFields)) {
             return $this;
         }
-
-        $field = $searchableFields[0];
-        $value = $search;
 
         if (str_contains($search, ':')) {
             [$f, $v] = explode(':', $search, 2);
@@ -223,8 +220,12 @@ final class SelectBuilder
                 return $this;
             }
 
-            $field = $f;
+            $field = $fieldMap[$f] ?? $f;
             $value = $v;
+        } else {
+            $defaultField = $searchableFields[0];
+            $field = $fieldMap[$defaultField] ?? $defaultField;
+            $value = $search;
         }
 
         foreach (explode(' ', $value) as $kw) {
