@@ -17,144 +17,25 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
 - **Search Functionality**: Easily implement search with keywords across fields and optional fields mapping when using joins.
 
-
 ## 📥 Installation
 
 Install via Composer:
 
-~~~bash
+```bash
 composer require solophp/query-builder
-~~~
+```
 
 ## 🚀 Usage
 
 ### Initialization
 
-~~~php
+```php
 use App\Core\QueryBuilder\QueryBuilder;
 use Solo\Database;
 
 $db = new Database(/* your config */);
 $qb = new QueryBuilder($db);
-~~~
-
-### SELECT
-
-~~~php
-$results = $qb
-    ->select(['id', 'title'])
-    ->from('posts|p')
-    ->where('p.created_at', '>', '2023-01-01')
-    ->leftJoin('users|u', 'u.id = p.author_id')
-    ->orderBy('p.id', 'DESC')
-    ->limit(10)
-    ->get();
-~~~
-
-### INSERT
-
-~~~php
-$qb->insert('posts')
-    ->values([
-        'title' => 'Hello World',
-        'content' => 'Welcome to my blog!',
-        'author_id' => 1
-    ])
-    ->execute();
-~~~
-
-### UPDATE
-
-~~~php
-$qb->update('posts')
-    ->set(['title' => 'Updated Title'])
-    ->where('id', '=', 5)
-    ->execute();
-~~~
-
-### DELETE
-
-~~~php
-$qb->delete('posts')
-    ->where('id', 'IN', [4, 5, 6])
-    ->execute();
-~~~
-
-### Raw SQL
-
-~~~php
-$qb->select()
-    ->from('users')
-    ->whereRaw('LENGTH(username) > ?i', [10])
-    ->get();
-~~~
-
-### Using WHERE
-
-~~~php
-$qb->select()
-    ->from('orders|o')
-    ->whereGroup(function ($builder) {
-        $builder->where('o.status', '=', 'pending')
-                ->orWhere('o.payment_status', '=', 'failed');
-    })
-    ->get();
-~~~
-
-### Using HAVING
-
-You can add `HAVING` conditions similarly to `WHERE`. For example, if you want to find categories with more than 10 products:
-
-~~~php
-$results = $qb
-    ->select(['p.category', 'COUNT(p.id) AS total'])
-    ->from('products|p')
-    ->groupBy('p.category')
-    ->having('total', '>', 10)
-    ->get();
-~~~
-
-You can also chain multiple conditions, use `andHavingGroup()`, `orHaving()`, etc., just like with `WHERE`.
-
-### Using Search
-
-The search method provides a convenient way to search for keywords in specific fields:
-
-```php
-$results = $qb
-    ->select()
-    ->from('products|p')
-    ->search('laptop', ['p.name', 'p.description'])
-    ->get();
 ```
-
-You can also search in a specific field using a colon syntax:
-
-```php
-$results = $qb
-    ->select()
-    ->from('products|p')
-    ->search('name:gaming laptop', ['p.name', 'p.description', 'p.category'])
-    ->get();
-```
-
-Extended example of using search with an optional field map to handle joined tables more smoothly::
-
-```php
-$fieldMap = [
-    'category_name' => 'c.name',
-    'product_name'  => 'p.name',
-];
-
-$results = $qb
-    ->select(['p.*', 'c.name AS category_name'])
-    ->from('products|p')
-    ->join('categories|c', 'c.id = p.category_id')
-    ->search('category_name:Electronics', ['category_name', 'product_name'], $fieldMap)
-    ->get();
-```
-
-The search functionality supports multiple keywords (space-separated) and will apply them with an AND condition.
 
 ## 📘 API Reference
 
@@ -190,7 +71,7 @@ The search functionality supports multiple keywords (space-separated) and will a
 | `havingBetween(string $field, mixed $start, mixed $end)`  | HAVING BETWEEN condition.                                                |
 | `havingRaw(string $sql, array $bindings = [])`          | Insert a raw SQL snippet in HAVING.                                        |
 | `havingGroup(Closure $callback)`                        | Group multiple HAVING conditions via a closure.                            |
-| `orderBy(?string $field, ?string $direction)`             | ORDER BY clause. Safe to pass null values.                               |
+| `orderBy(?string $field, ?string $direction)`           | ORDER BY clause. Safe to pass null values.                                 |
 | `addOrderBy(string $field, string $direction)`          | Add additional order criteria.                                             |
 | `limit(int $limit, int $offset = 0)`                    | Limit and offset for pagination.                                           |
 | `paginate(int $page, int $limit)`                       | Paginate by page number.                                                   |
@@ -207,29 +88,87 @@ The search functionality supports multiple keywords (space-separated) and will a
 | `execute()`                                  | Execute `INSERT`, `UPDATE`, or `DELETE`.                   |
 | `toSql()`                                    | Return the generated SQL string without executing.         |
 
-### Examples
+## 📚 Examples
 
-**Indexed Results:**
+### SELECT
 
-~~~php
-$users = $qb->select()
+```php
+$results = $qb
+    ->select(['id', 'title'])
+    ->from('posts|p')
+    ->where('p.created_at', '>', '2023-01-01')
+    ->leftJoin('users|u', 'u.id = p.author_id')
+    ->orderBy('p.id', 'DESC')
+    ->limit(10)
+    ->get();
+```
+
+### INSERT
+
+```php
+$qb->insert('posts')
+    ->values([
+        'title' => 'Hello World',
+        'content' => 'Welcome to my blog!',
+        'author_id' => 1
+    ])
+    ->execute();
+```
+
+### UPDATE
+
+```php
+$qb->update('posts')
+    ->set(['title' => 'Updated Title'])
+    ->where('id', '=', 5)
+    ->execute();
+```
+
+### DELETE
+
+```php
+$qb->delete('posts')
+    ->where('id', 'IN', [4, 5, 6])
+    ->execute();
+```
+
+### Raw SQL
+
+```php
+$qb->select()
     ->from('users')
-    ->getIndexedBy('id'); 
-// Returns array keyed by user ID
-~~~
+    ->whereRaw('LENGTH(username) > ?i', [10])
+    ->get();
+```
 
-**Counting Records:**
+### Using WHERE
 
-~~~php
-$total = $qb->select()
-    ->from('posts')
-    ->where('status', '=', 'published')
-    ->count();
-~~~
+```php
+$qb->select()
+    ->from('orders|o')
+    ->whereGroup(function ($builder) {
+        $builder->where('o.status', '=', 'pending')
+                ->orWhere('o.payment_status', '=', 'failed');
+    })
+    ->get();
+```
 
-**Complex Grouping with WHERE:**
+### Using HAVING
 
-~~~php
+```php
+$results = $qb
+    ->select(['p.category', 'COUNT(p.id) AS total'])
+    ->from('products|p')
+    ->groupBy('p.category')
+    ->having('total', '>', 10)
+    ->get();
+```
+
+You can also chain multiple conditions, use `andHavingGroup()`, `orHaving()`, etc., just like with `WHERE`.
+
+### Complex Grouping with WHERE
+
+```php
 $results = $qb->select()
     ->from('orders')
     ->whereGroup(function ($builder) {
@@ -237,33 +176,65 @@ $results = $qb->select()
                 ->orWhere('priority', '>', 5);
     })
     ->get();
-~~~
-
-**Using HAVING:**
-
-~~~php
-$results = $qb->select(['p.category', 'COUNT(p.id) AS total'])
-    ->from('products|p')
-    ->groupBy('p.category')
-    ->having('total', '>', 10)
-    ->get();
 ```
 
-**Using Search:**
+### Indexed Results
 
 ```php
-// Search for "phone" in name, description, and tags fields
-$results = $qb->select()
-    ->from('products|p')
-    ->search('phone', ['p.name', 'p.description', 'p.tags'])
-    ->get();
+$users = $qb->select()
+    ->from('users')
+    ->getIndexedBy('id'); 
+// Returns array keyed by user ID
+```
 
-// Search for "premium" in only the category field
-$results = $qb->select()
+### Counting Records
+
+```php
+$total = $qb->select()
+    ->from('posts')
+    ->where('status', '=', 'published')
+    ->count();
+```
+
+### Using Search
+
+#### Basic search across multiple fields:
+
+```php
+$results = $qb
+    ->select()
     ->from('products|p')
-    ->search('category:premium', ['p.name', 'p.category', 'p.tags'])
+    ->search('laptop', ['p.name', 'p.description'])
     ->get();
 ```
+
+#### Search in a specific field using colon syntax:
+
+```php
+$results = $qb
+    ->select()
+    ->from('products|p')
+    ->search('name:gaming laptop', ['p.name', 'p.description', 'p.category'])
+    ->get();
+```
+
+#### Extended search with field mapping for joins:
+
+```php
+$fieldMap = [
+    'category_name' => 'c.name',
+    'product_name'  => 'p.name',
+];
+
+$results = $qb
+    ->select(['p.*', 'c.name AS category_name'])
+    ->from('products|p')
+    ->join('categories|c', 'c.id = p.category_id')
+    ->search('category_name:Electronics', ['category_name', 'product_name'], $fieldMap)
+    ->get();
+```
+
+The search functionality supports multiple keywords (space-separated) and will apply them with an AND condition.
 
 ## ✅ Requirements
 
