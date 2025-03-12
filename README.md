@@ -1,6 +1,6 @@
 # Solo Query Builder 🛠
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/solophp/query-builder)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/solophp/query-builder)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 A lightweight, fluent SQL query builder for PHP, providing secure and intuitive database interactions.
@@ -15,7 +15,8 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **Join Clauses**: `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN` support.
 - **Raw SQL**: Safely insert raw SQL snippets when needed.
 - **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
-- **Search Functionality**: Easily implement search with keywords across fields.
+- **Search Functionality**: Easily implement search with keywords across fields and optional fields mapping when using joins.
+
 
 ## 📥 Installation
 
@@ -134,6 +135,22 @@ $results = $qb
     ->select()
     ->from('products|p')
     ->search('name:gaming laptop', ['p.name', 'p.description', 'p.category'])
+    ->get();
+```
+
+Extended example of using search with an optional field map to handle joined tables more smoothly::
+
+```php
+$fieldMap = [
+    'category_name' => 'c.name',
+    'product_name'  => 'p.name',
+];
+
+$results = $qb
+    ->select(['p.*', 'c.name AS category_name'])
+    ->from('products|p')
+    ->join('categories|c', 'c.id = p.category_id')
+    ->search('category_name:Electronics', ['category_name', 'product_name'], $fieldMap)
     ->get();
 ```
 
