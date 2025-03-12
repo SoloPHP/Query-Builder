@@ -168,7 +168,7 @@ final class SelectBuilder
         return $this;
     }
 
-    public function orderBy(?string $field, string $direction = 'ASC'): self
+    public function orderBy(?string $field, string $direction = 'ASC', array $fieldMap = []): self
     {
         if (!$field) {
             return $this;
@@ -179,13 +179,15 @@ final class SelectBuilder
             $direction = 'ASC';
         }
 
-        $this->orderBy[] = [$field, $direction];
+        $mappedField = $fieldMap[$field] ?? $field;
+
+        $this->orderBy[] = [$mappedField, $direction];
         return $this;
     }
 
-    public function addOrderBy(string $field, string $direction = 'ASC'): self
+    public function addOrderBy(string $field, string $direction = 'ASC', array $fieldMap = []): self
     {
-        return $this->orderBy($field, $direction);
+        return $this->orderBy($field, $direction, $fieldMap);
     }
 
     public function limit(int $limit, int $offset = 0): self

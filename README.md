@@ -15,6 +15,7 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **Join Clauses**: `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN` support.
 - **Raw SQL**: Safely insert raw SQL snippets when needed.
 - **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
+- **Field Mapping**: Consistent field mapping for both search and orderBy operations across joins.
 - **Search Functionality**: Easily implement search with keywords across fields and optional fields mapping when using joins.
 
 ## 📥 Installation
@@ -71,11 +72,11 @@ $qb = new QueryBuilder($db);
 | `havingBetween(string $field, mixed $start, mixed $end)`  | HAVING BETWEEN condition.                                                |
 | `havingRaw(string $sql, array $bindings = [])`          | Insert a raw SQL snippet in HAVING.                                        |
 | `havingGroup(Closure $callback)`                        | Group multiple HAVING conditions via a closure.                            |
-| `orderBy(?string $field, ?string $direction)`           | ORDER BY clause. Safe to pass null values.                                 |
-| `addOrderBy(string $field, string $direction)`          | Add additional order criteria.                                             |
+| `orderBy(?string $field, ?string $direction, array $fieldMap = [])` | ORDER BY clause with optional field mapping support.            |
+| `addOrderBy(string $field, string $direction, array $fieldMap = [])` | Add additional order criteria with mapping support.            |
 | `limit(int $limit, int $offset = 0)`                    | Limit and offset for pagination.                                           |
 | `paginate(int $page, int $limit)`                       | Paginate by page number.                                                   |
-| `search(?string $search, array $searchableFields)`      | Add search conditions with multiple keywords support.                      |
+| `search(?string $search, array $searchableFields, array $fieldMap = [])` | Add search conditions with field mapping support.          |
 
 ### Execution & Results
 
@@ -196,6 +197,42 @@ $total = $qb->select()
     ->count();
 ```
 
+### Using Field Mapping
+
+#### Search with field mapping:
+
+```php
+$fieldMap = [
+    'name' => 'p.name',
+    'category' => 'c.name'
+];
+
+$results = $qb
+    ->select(['p.*', 'c.name AS category_name'])
+    ->from('products|p')
+    ->join('categories|c', 'c.id = p.category_id')
+    ->search('category:Electronics', ['name', 'category'], $fieldMap)
+    ->get();
+```
+
+#### OrderBy with field mapping:
+
+```php
+$fieldMap = [
+    'name' => 'p.name',
+    'price' => 'p.price',
+    'category' => 'c.name'
+];
+
+$results = $qb
+    ->select(['p.*', 'c.name AS category_name'])
+    ->from('products|p')
+    ->join('categories|c', 'c.id = p.category_id')
+    ->search('Electronics', ['name', 'category'], $fieldMap)
+    ->orderBy('price', 'DESC', $fieldMap)
+    ->get();
+```
+
 ### Using Search
 
 #### Basic search across multiple fields:
@@ -218,12 +255,13 @@ $results = $qb
     ->get();
 ```
 
-#### Extended search with field mapping for joins:
+#### Combined field mapping for search and sorting:
 
 ```php
 $fieldMap = [
     'category_name' => 'c.name',
     'product_name'  => 'p.name',
+    'price'         => 'p.price'
 ];
 
 $results = $qb
@@ -231,6 +269,7 @@ $results = $qb
     ->from('products|p')
     ->join('categories|c', 'c.id = p.category_id')
     ->search('category_name:Electronics', ['category_name', 'product_name'], $fieldMap)
+    ->orderBy('price', 'DESC', $fieldMap)
     ->get();
 ```
 
