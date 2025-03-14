@@ -1,6 +1,6 @@
 # Solo Query Builder 🛠
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/solophp/query-builder)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/solophp/query-builder)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 A lightweight, fluent SQL query builder for PHP, providing secure and intuitive database interactions.
