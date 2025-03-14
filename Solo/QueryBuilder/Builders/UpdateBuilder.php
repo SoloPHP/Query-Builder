@@ -4,25 +4,58 @@ namespace Solo\QueryBuilder\Builders;
 
 use Solo\Database;
 use Solo\QueryBuilder\Components\ConditionBuilder;
+use Solo\QueryBuilder\Exceptions\QueryBuilderException;
+use Solo\QueryBuilder\Traits\TableParserTrait;
 
 final class UpdateBuilder
 {
+    use TableParserTrait;
+
     private Database $db;
-    private string $table;
+    private string $table = '';
+    private string $alias = '';
+    private array $joins = [];
     private array $data = [];
     private ConditionBuilder $conditionBuilder;
 
     public function __construct(Database $db, string $table)
     {
         $this->db = $db;
-        $this->table = $table;
-        $this->conditionBuilder = new ConditionBuilder();
+
+        [$tableName, $alias] = $this->parseTable($table);
+        $this->table = $tableName;
+        $this->alias = $alias;
+
+        $this->conditionBuilder = new ConditionBuilder($this->alias);
     }
 
     public function set(array $data): self
     {
         $this->data = $data;
         return $this;
+    }
+
+    public function join(string $table, string $condition, string $type = 'INNER'): self
+    {
+        [$joinTable, $joinAlias] = $this->parseTable($table);
+
+        $this->joins[] = "$type JOIN $joinTable AS $joinAlias ON $condition";
+        return $this;
+    }
+
+    public function innerJoin(string $table, string $condition): self
+    {
+        return $this->join($table, $condition, 'INNER');
+    }
+
+    public function leftJoin(string $table, string $condition): self
+    {
+        return $this->join($table, $condition, 'LEFT');
+    }
+
+    public function rightJoin(string $table, string $condition): self
+    {
+        return $this->join($table, $condition, 'RIGHT');
     }
 
     public function where(string $field, string $operator, mixed $value = null): self
@@ -44,16 +77,33 @@ final class UpdateBuilder
 
     public function toSql(): string
     {
-        $where = $this->conditionBuilder->hasWhereConditions()
-            ? ' WHERE ' . $this->conditionBuilder->buildWhere()
-            : '';
+        if (empty($this->table)) {
+            throw new QueryBuilderException('Table not specified in UpdateBuilder.');
+        }
 
-        return $this->db->prepare(
-            "UPDATE ?t SET ?A{$where}",
-            $this->table,
-            $this->data,
-            ...$this->conditionBuilder->getWhereBindings()
+        $tablePart = $this->alias
+            ? "{$this->table} AS {$this->alias}"
+            : $this->table;
+
+        $joinsSql = '';
+        if (!empty($this->joins)) {
+            $joinsSql = ' ' . implode(' ', $this->joins);
+        }
+
+        $whereSql = '';
+        if ($this->conditionBuilder->hasWhereConditions()) {
+            $where = $this->conditionBuilder->buildWhere();
+            $whereSql = " WHERE $where";
+        }
+
+        $rawSql = "UPDATE $tablePart$joinsSql SET ?A{$whereSql}";
+
+        $params = array_merge(
+            [$this->data],
+            $this->conditionBuilder->getWhereBindings()
         );
+
+        return $this->db->prepare($rawSql, ...$params);
     }
 
     public function execute(): int

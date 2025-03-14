@@ -12,7 +12,7 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **Secure Binding**: Automatic placeholder handling to prevent SQL injection.
 - **Alias Parsing**: Easy table aliasing (e.g., `answers_services|a`).
 - **Condition Groups**: Complex `WHERE` clauses with closures.
-- **Join Clauses**: `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN` support.
+- **Join Clauses**: `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN` support in `SELECT` and `UPDATE`.
 - **Raw SQL**: Safely insert raw SQL snippets when needed.
 - **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
 - **Field Mapping**: Consistent field mapping for both search and orderBy operations across joins.
@@ -104,6 +104,17 @@ $results = $qb
     ->get();
 ```
 
+### SELECT WITH JOIN
+
+```php
+$results = $qb
+    ->select(['u.id', 'u.name', 'p.phone'])
+    ->from('users|u')
+    ->leftJoin('profiles|p', 'p.user_id = u.id')
+    ->where('u.status', '=', 'active')
+    ->get();
+```
+
 ### INSERT
 
 ```php
@@ -122,6 +133,15 @@ $qb->insert('posts')
 $qb->update('posts')
     ->set(['title' => 'Updated Title'])
     ->where('id', '=', 5)
+    ->execute();
+```
+
+### UPDATE with JOIN
+```php
+$qb->update('users AS u')
+    ->innerJoin('profiles p', 'p.user_id = u.id')
+    ->set(['u.status' => 'active', 'p.updated_at' => 'NOW()'])
+    ->where('u.id', '=', 42)
     ->execute();
 ```
 
