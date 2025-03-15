@@ -3,6 +3,8 @@
 namespace Solo\QueryBuilder\Builders;
 
 use Solo\Database;
+use Solo\QueryBuilder\Exceptions\QueryBuilderException;
+use Solo\Database\Expressions\RawExpression;
 
 final class InsertBuilder
 {
@@ -24,11 +26,15 @@ final class InsertBuilder
 
     public function toSql(): string
     {
-        return $this->db->prepare(
-            "INSERT INTO ?t SET ?A",
-            $this->table,
-            $this->data
-        );
+        if (empty($this->data)) {
+            throw new QueryBuilderException('No data specified for INSERT. Use values().');
+        }
+
+        $rawSql = "INSERT INTO ?t SET ?A";
+
+        $params = [$this->table, $this->data];
+
+        return $this->db->prepare($rawSql, ...$params);
     }
 
     public function execute(): string|false

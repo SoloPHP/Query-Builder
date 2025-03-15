@@ -6,6 +6,7 @@ use Solo\Database;
 use Solo\QueryBuilder\Components\ConditionBuilder;
 use Solo\QueryBuilder\Exceptions\QueryBuilderException;
 use Solo\QueryBuilder\Traits\TableParserTrait;
+use Solo\Database\Expressions\RawExpression;
 
 final class UpdateBuilder
 {

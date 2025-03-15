@@ -9,6 +9,7 @@ use Solo\QueryBuilder\Components\ConditionBuilder;
 use Solo\QueryBuilder\Builders\CountBuilder;
 use Solo\QueryBuilder\Exceptions\QueryBuilderException;
 use Solo\QueryBuilder\Traits\TableParserTrait;
+use Solo\Database\Expressions\RawExpression;
 
 final class SelectBuilder
 {
@@ -26,16 +27,20 @@ final class SelectBuilder
     private string $limit = '';
     private bool $distinct = false;
 
-    public function __construct(Database $db, array $fields = ['*'])
+    private array $selectBindings = [];
+
+    public function __construct(Database $db, array $fields = ['*'], array $bindings = [])
     {
         $this->db = $db;
         $this->fields = $fields;
+        $this->selectBindings = $bindings;
         $this->conditionBuilder = new ConditionBuilder('');
     }
 
-    public function select(array $fields = ['*']): self
+    public function select(array $fields = ['*'], array $bindings = []): self
     {
         $this->fields = $fields;
+        $this->selectBindings = $bindings;
         return $this;
     }
 
@@ -313,6 +318,7 @@ final class SelectBuilder
         $rawSql = "$select$from$joins$where$group$having$order$limit";
 
         $params = array_merge(
+            $this->selectBindings,
             [$this->table, $this->alias],
             $this->conditionBuilder->getWhereBindings(),
             $this->conditionBuilder->getHavingBindings()
@@ -323,8 +329,25 @@ final class SelectBuilder
 
     private function buildSelectClause(): string
     {
-        $processedFields = array_map([$this, 'processField'], $this->fields);
         $keyword = $this->distinct ? 'SELECT DISTINCT' : 'SELECT';
+
+        // Если поле является объектом RawExpression, возвращаем его строковое представление
+        $processedFields = array_map(function ($field) {
+            if ($field instanceof RawExpression) {
+                return (string)$field;
+            }
+            if ($field === '*') {
+                return $this->alias ? "{$this->alias}.*" : '*';
+            }
+            if (preg_match('/\b(COUNT|SUM|AVG|MIN|MAX)\s*\(/i', $field)) {
+                return $field;
+            }
+            if ($this->alias && !str_contains($field, '.')) {
+                return "{$this->alias}.{$field}";
+            }
+            return $field;
+        }, $this->fields);
+
         return $keyword . ' ' . implode(', ', $processedFields);
     }
 
@@ -341,21 +364,5 @@ final class SelectBuilder
             $parts[] = $field . ' ' . strtoupper($direction);
         }
         return ' ORDER BY ' . implode(', ', $parts);
-    }
-
-    private function processField(string $field): string
-    {
-        if ($field === '*') {
-            return $this->alias ? "{$this->alias}.*" : '*';
-        }
-
-        if (preg_match('/\b(COUNT|SUM|AVG|MIN|MAX)\s*\(/i', $field)) {
-            return $field;
-        }
-
-        if ($this->alias && !str_contains($field, '.')) {
-            return "{$this->alias}.{$field}";
-        }
-        return $field;
     }
 }

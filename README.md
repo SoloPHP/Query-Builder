@@ -14,6 +14,8 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **Condition Groups**: Complex `WHERE` clauses with closures.
 - **Join Clauses**: `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN` support in `SELECT` and `UPDATE`.
 - **Raw SQL**: Safely insert raw SQL snippets when needed.
+- **RawExpression Support**: Use RawExpression objects in select fields for complex expressions.
+- **Select Bindings**: Add parameters directly to the select statement for secure value binding.
 - **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
 - **Field Mapping**: Consistent field mapping for both search and orderBy operations across joins.
 - **Search Functionality**: Easily implement search with keywords across fields and optional fields mapping when using joins.
@@ -44,7 +46,7 @@ $qb = new QueryBuilder($db);
 
 | Method                       | Description                                          |
 |-----------------------------|------------------------------------------------------|
-| `select(array $fields)`     | Initiate a `SELECT` query.                          |
+| `select(array $fields, array $bindings = [])`     | Initiate a `SELECT` query with optional bindings.         |
 | `insert(string $table)`     | Initiate an `INSERT` query.                         |
 | `update(string $table)`     | Initiate an `UPDATE` query.                         |
 | `delete(string $table)`     | Initiate a `DELETE` query.                          |
@@ -101,6 +103,36 @@ $results = $qb
     ->leftJoin('users|u', 'u.id = p.author_id')
     ->orderBy('p.id', 'DESC')
     ->limit(10)
+    ->get();
+```
+
+### SELECT With Bindings
+
+```php
+$results = $qb
+    ->select([
+        'id', 
+        'title', 
+        'DATE_FORMAT(created_at, ?s) AS formatted_date'
+    ], ['%Y-%m-%d'])
+    ->from('posts')
+    ->get();
+```
+
+### Using RawExpressions
+
+```php
+use Solo\Database\Expressions\RawExpression;
+
+$results = $qb
+    ->select([
+        'u.id',
+        'u.email',
+        new RawExpression('CONCAT(u.first_name, " ", u.last_name) AS full_name'),
+        new RawExpression('DATEDIFF(NOW(), u.created_at) AS days_registered')
+    ])
+    ->from('users|u')
+    ->where('u.status', '=', 'active')
     ->get();
 ```
 

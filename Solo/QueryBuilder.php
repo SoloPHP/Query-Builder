@@ -18,9 +18,9 @@ readonly class QueryBuilder
     {
     }
 
-    public function select(array $fields = ['*']): SelectBuilder
+    public function select(array $fields = ['*'], array $bindings = []): SelectBuilder
     {
-        return new SelectBuilder($this->db, $fields);
+        return new SelectBuilder($this->db, $fields, $bindings);
     }
 
     public function insert(string $table): InsertBuilder
