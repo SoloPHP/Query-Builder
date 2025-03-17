@@ -82,14 +82,15 @@ $qb = new QueryBuilder($db);
 
 ### Execution & Results
 
-| Method                                       | Description                                                |
-|----------------------------------------------|------------------------------------------------------------|
-| `get(?int $fetchMode = null)`                | Execute SELECT and return all rows.                        |
-| `getOne(?int $fetchMode = null)`             | Execute SELECT with `LIMIT 1` and return a single row.     |
-| `getIndexedBy(string $field)`                | Return an associative array indexed by a specific field.   |
-| `count()`                                    | Execute a `SELECT COUNT(*)` using the current conditions.  |
-| `execute()`                                  | Execute `INSERT`, `UPDATE`, or `DELETE`.                   |
-| `toSql()`                                    | Return the generated SQL string without executing.         |
+| Method                           | Description                                               |
+|----------------------------------|-----------------------------------------------------------|
+| `get(?int $fetchMode = null)`    | Execute SELECT and return all rows.                       |
+| `getOne(?int $fetchMode = null)` | Execute SELECT with `LIMIT 1` and return a single row.    |
+| `getField(string $field)`        | Fetch a specific field value from the first row.          |
+| `getIndexedBy(string $field)`    | Return an associative array indexed by a specific field.  |
+| `count()`                        | Execute a `SELECT COUNT(*)` using the current conditions. |
+| `execute()`                      | Execute `INSERT`, `UPDATE`, or `DELETE`.                  |
+| `toSql()`                        | Return the generated SQL string without executing.        |
 
 ## 📚 Examples
 
@@ -229,6 +230,14 @@ $results = $qb->select()
                 ->orWhere('priority', '>', 5);
     })
     ->get();
+```
+### Fetch a specific field value from the first row.
+
+```php
+$id = $qb->select(['id'])
+    ->from('users')
+    ->where('email', '=', 'test@example.com')
+    ->getField('id');
 ```
 
 ### Indexed Results

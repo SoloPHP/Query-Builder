@@ -3,6 +3,7 @@
 namespace Solo\QueryBuilder\Builders;
 
 use Closure;
+use PDO;
 use stdClass;
 use Solo\Database;
 use Solo\QueryBuilder\Components\ConditionBuilder;
@@ -264,6 +265,17 @@ final class SelectBuilder
         $this->limit(1);
         $rows = $this->get($fetchMode);
         return $rows[0] ?? null;
+    }
+
+    public function getField(string $field): mixed
+    {
+        $result = $this->getOne(PDO::FETCH_ASSOC);
+
+        if (!array_key_exists($field, $result)) {
+            throw new QueryBuilderException("Field '$field' not found in result.");
+        }
+
+        return $result[$field];
     }
 
     public function getIndexedBy(string $field): array
