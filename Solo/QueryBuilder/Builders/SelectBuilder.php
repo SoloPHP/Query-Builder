@@ -205,9 +205,13 @@ final class SelectBuilder
         return $this;
     }
 
-    public function paginate(int $page, int $limit): self
+    public function paginate(?int $limit = null, ?int $page = null): self
     {
-        $offset = ($page - 1) * $limit;
+        if ($limit === null) {
+            return $this;
+        }
+
+        $offset = ($page !== null && $page > 1) ? ($page - 1) * $limit : 0;
         return $this->limit($limit, $offset);
     }
 
