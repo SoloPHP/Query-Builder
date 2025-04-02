@@ -219,7 +219,7 @@ final class SelectBuilder
      *                     SEARCH
      *------------------------------------------------------------------------*/
 
-    public function search(?string $search, array $searchableFields = [], array $fieldMap = []): self
+    public function smartSearch(?string $search, array $searchableFields = [], array $fieldMap = []): self
     {
         if (!$search || empty($searchableFields)) {
             return $this;
@@ -260,11 +260,11 @@ final class SelectBuilder
             throw new QueryBuilderException('Table not specified. Use from() method.');
         }
 
-        $sql = $this->toSql();
+        $sql = $this->compile();
         return $this->db->query($sql)->fetchAll($fetchMode);
     }
 
-    public function getOne(?int $fetchMode = null): array|stdClass|null
+    public function getFirst(?int $fetchMode = null): array|stdClass|null
     {
         $this->limit(1);
         $rows = $this->get($fetchMode);
@@ -273,7 +273,7 @@ final class SelectBuilder
 
     public function getFieldValue(string $field): mixed
     {
-        $result = $this->getOne(PDO::FETCH_ASSOC);
+        $result = $this->getFirst(PDO::FETCH_ASSOC);
 
         if (!is_array($result) || !array_key_exists($field, $result)) {
             throw new QueryBuilderException("Field '$field' not found in result.");
@@ -314,7 +314,7 @@ final class SelectBuilder
     /*------------------------------------------------------------------------*
      *                     SQL ASSEMBLY
      *------------------------------------------------------------------------*/
-    public function toSql(): string
+    public function compile(): string
     {
         $select = $this->buildSelectClause();
         $from = " FROM ?t AS ?c";

@@ -41,7 +41,7 @@ final class DeleteBuilder
         return $this;
     }
 
-    public function toSql(): string
+    public function compile(): string
     {
         $where = $this->conditionBuilder->hasWhereConditions()
             ? ' WHERE ' . $this->conditionBuilder->buildWhere()
@@ -56,6 +56,6 @@ final class DeleteBuilder
 
     public function execute(): int
     {
-        return $this->db->query($this->toSql())->rowCount();
+        return $this->db->query($this->compile())->rowCount();
     }
 }

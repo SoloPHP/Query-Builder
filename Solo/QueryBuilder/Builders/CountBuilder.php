@@ -31,7 +31,7 @@ final class CountBuilder
         $this->groupBy = $groupBy;
     }
 
-    public function toSql(): string
+    public function compile(): string
     {
         $select = "SELECT COUNT(*) AS count";
         $from   = " FROM ?t AS ?c";
@@ -60,7 +60,7 @@ final class CountBuilder
 
     public function getValue(): int
     {
-        $stmt = $this->db->query($this->toSql());
+        $stmt = $this->db->query($this->compile());
         $value = $stmt->fetchColumn();
         return (int)($value ?? 0);
     }

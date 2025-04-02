@@ -24,7 +24,7 @@ final class InsertBuilder
         return $this;
     }
 
-    public function toSql(): string
+    public function compile(): string
     {
         if (empty($this->data)) {
             throw new QueryBuilderException('No data specified for INSERT. Use values().');
@@ -39,6 +39,6 @@ final class InsertBuilder
 
     public function execute(): string|false
     {
-        return $this->db->query($this->toSql())->lastInsertId();
+        return $this->db->query($this->compile())->lastInsertId();
     }
 }

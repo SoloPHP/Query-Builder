@@ -76,7 +76,7 @@ final class UpdateBuilder
         return $this;
     }
 
-    public function toSql(): string
+    public function compile(): string
     {
         if (empty($this->table)) {
             throw new QueryBuilderException('Table not specified in UpdateBuilder.');
@@ -109,6 +109,6 @@ final class UpdateBuilder
 
     public function execute(): int
     {
-        return $this->db->query($this->toSql())->rowCount();
+        return $this->db->query($this->compile())->rowCount();
     }
 }

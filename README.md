@@ -78,20 +78,20 @@ $qb = new QueryBuilder($db);
 | `addOrderBy(string $field, string $direction, array $fieldMap = [])` | Add additional order criteria with mapping support.            |
 | `limit(int $limit, int $offset = 0)`                    | Limit and offset for pagination.                                           |
 | `paginate(int $page, int $limit)`                       | Paginate by page number.                                                   |
-| `search(?string $search, array $searchableFields, array $fieldMap = [])` | Add search conditions with field mapping support.          |
+| `smartSearch(?string $search, array $searchableFields, array $fieldMap = [])` | Add search conditions with field mapping support.          |
 
 ### Execution & Results
 
 | Method                           | Description                                               |
 |----------------------------------|-----------------------------------------------------------|
 | `get(?int $fetchMode = null)`    | Execute SELECT and return all rows.                       |
-| `getOne(?int $fetchMode = null)` | Execute SELECT with `LIMIT 1` and return a single row.    |
+| `getFirst(?int $fetchMode = null)` | Execute SELECT with `LIMIT 1` and return a single row.    |
 | `getFieldValue(string $field)`   | Fetch a single field value from the first result row.     |
 | `getFieldValues(string $field)`  | Fetch an array of all values for a specific field.        |
 | `getIndexedBy(string $field)`    | Return an associative array indexed by a specific field.  |
 | `count()`                        | Execute a `SELECT COUNT(*)` using the current conditions. |
 | `execute()`                      | Execute `INSERT`, `UPDATE`, or `DELETE`.                  |
-| `toSql()`                        | Return the generated SQL string without executing.        |
+| `compile()`                      | Return the generated SQL string without executing.        |
 
 ## 📚 Examples
 
@@ -285,7 +285,7 @@ $results = $qb
     ->select(['p.*', 'c.name AS category_name'])
     ->from('products|p')
     ->join('categories|c', 'c.id = p.category_id')
-    ->search('category:Electronics', ['name', 'category'], $fieldMap)
+    ->smartSearch('category:Electronics', ['name', 'category'], $fieldMap)
     ->get();
 ```
 
@@ -302,12 +302,12 @@ $results = $qb
     ->select(['p.*', 'c.name AS category_name'])
     ->from('products|p')
     ->join('categories|c', 'c.id = p.category_id')
-    ->search('Electronics', ['name', 'category'], $fieldMap)
+    ->smartSearch('Electronics', ['name', 'category'], $fieldMap)
     ->orderBy('price', 'DESC', $fieldMap)
     ->get();
 ```
 
-### Using Search
+### Using smartSearch
 
 #### Basic search across multiple fields:
 
@@ -315,7 +315,7 @@ $results = $qb
 $results = $qb
     ->select()
     ->from('products|p')
-    ->search('laptop', ['p.name', 'p.description'])
+    ->smartSearch('laptop', ['p.name', 'p.description'])
     ->get();
 ```
 
@@ -325,7 +325,7 @@ $results = $qb
 $results = $qb
     ->select()
     ->from('products|p')
-    ->search('name:gaming laptop', ['p.name', 'p.description', 'p.category'])
+    ->smartSearch('name:gaming laptop', ['p.name', 'p.description', 'p.category'])
     ->get();
 ```
 
@@ -342,7 +342,7 @@ $results = $qb
     ->select(['p.*', 'c.name AS category_name'])
     ->from('products|p')
     ->join('categories|c', 'c.id = p.category_id')
-    ->search('category_name:Electronics', ['category_name', 'product_name'], $fieldMap)
+    ->smartSearch('category_name:Electronics', ['category_name', 'product_name'], $fieldMap)
     ->orderBy('price', 'DESC', $fieldMap)
     ->get();
 ```
