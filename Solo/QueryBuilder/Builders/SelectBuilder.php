@@ -271,15 +271,22 @@ final class SelectBuilder
         return $rows[0] ?? null;
     }
 
-    public function getField(string $field): mixed
+    public function getFieldValue(string $field): mixed
     {
         $result = $this->getOne(PDO::FETCH_ASSOC);
 
-        if (!array_key_exists($field, $result)) {
+        if (!is_array($result) || !array_key_exists($field, $result)) {
             throw new QueryBuilderException("Field '$field' not found in result.");
         }
 
         return $result[$field];
+    }
+
+    public function getFieldValues(string $field): array
+    {
+        $results = $this->get(PDO::FETCH_ASSOC);
+
+        return array_column($results, $field);
     }
 
     public function getIndexedBy(string $field): array

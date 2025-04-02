@@ -86,7 +86,8 @@ $qb = new QueryBuilder($db);
 |----------------------------------|-----------------------------------------------------------|
 | `get(?int $fetchMode = null)`    | Execute SELECT and return all rows.                       |
 | `getOne(?int $fetchMode = null)` | Execute SELECT with `LIMIT 1` and return a single row.    |
-| `getField(string $field)`        | Fetch a specific field value from the first row.          |
+| `getFieldValue(string $field)`   | Fetch a single field value from the first result row.     |
+| `getFieldValues(string $field)`  | Fetch an array of all values for a specific field.        |
 | `getIndexedBy(string $field)`    | Return an associative array indexed by a specific field.  |
 | `count()`                        | Execute a `SELECT COUNT(*)` using the current conditions. |
 | `execute()`                      | Execute `INSERT`, `UPDATE`, or `DELETE`.                  |
@@ -231,13 +232,25 @@ $results = $qb->select()
     })
     ->get();
 ```
-### Fetch a specific field value from the first row.
+
+### Get a specific field value from the first row
 
 ```php
-$id = $qb->select(['id'])
+$email = $qb->select(['email'])
     ->from('users')
-    ->where('email', '=', 'test@example.com')
-    ->getField('id');
+    ->where('id', '=', 42)
+    ->getFieldValue('email');
+```
+
+### Get an array of values for a specific field
+
+```php
+$emails = $qb->select(['email'])
+    ->from('users')
+    ->where('status', '=', 'active')
+    ->getFieldValues('email');
+
+// Example result: ['user1@example.com', 'user2@example.com', ...]
 ```
 
 ### Indexed Results
