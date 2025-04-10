@@ -22,7 +22,7 @@
   },
   "require": {
     "php": "^8.2",
-    "solophp/database": "^2.8"
+    "solophp/database": "^2.10"
   },
   "minimum-stability": "stable",
   "prefer-stable": true
