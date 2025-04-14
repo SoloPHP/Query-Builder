@@ -41,6 +41,21 @@ final class DeleteBuilder
         return $this;
     }
 
+    public function when(string $field, string $operator, mixed $value = null): self
+    {
+        return $value !== null ? $this->where($field, $operator, $value) : $this;
+    }
+
+    public function andWhen(string $field, string $operator, mixed $value = null): self
+    {
+        return $value !== null ? $this->andWhere($field, $operator, $value) : $this;
+    }
+
+    public function orWhen(string $field, string $operator, mixed $value = null): self
+    {
+        return $value !== null ? $this->orWhere($field, $operator, $value) : $this;
+    }
+
     public function compile(): string
     {
         $where = $this->conditionBuilder->hasWhereConditions()

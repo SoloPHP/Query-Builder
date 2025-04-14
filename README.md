@@ -19,7 +19,7 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
 - **Field Mapping**: Consistent field mapping for both search and orderBy operations across joins.
 - **Search Functionality**: Easily implement search with keywords across fields and optional fields mapping when using joins.
-
+- **Conditional WHERE**: Use `when()`, `andWhen()`, `orWhen()` to add conditions only if value is not null.
 ## 📥 Installation
 
 Install via Composer:
@@ -64,6 +64,9 @@ $qb = new QueryBuilder($db);
 | `where(string $field, string $operator, mixed $value)`  | Basic WHERE condition.                                                     |
 | `andWhere(string $field, string $operator, mixed $value)` | AND condition (chained).                                                  |
 | `orWhere(string $field, string $operator, mixed $value)`  | OR condition.                                                              |
+| `when(string $field, string $operator, mixed $value)`   | WHERE condition only if value is not null.                                 |
+| `andWhen(string $field, string $operator, mixed $value)`| AND condition only if value is not null.                                   |
+| `orWhen(string $field, string $operator, mixed $value)` | OR condition only if value is not null.                                    |
 | `whereBetween(string $field, mixed $start, mixed $end)` | WHERE BETWEEN condition.                                                   |
 | `whereRaw(string $sql, array $bindings = [])`           | Insert a raw SQL snippet in WHERE.                                         |
 | `whereGroup(Closure $callback)`                         | Group multiple conditions via a closure.                                   |
