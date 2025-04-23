@@ -237,34 +237,48 @@ final class SelectBuilder
      *                     SEARCH
      *------------------------------------------------------------------------*/
 
-    public function smartSearch(?string $search, array $searchableFields = [], array $fieldMap = []): self
+    public function searchAll(?array $search, array $fields): self
     {
-        if (!$search || empty($searchableFields)) {
+        return $this->applySearchConditions($search, $fields, 'andWhere');
+    }
+
+    public function searchAny(?array $search, array $fields): self
+    {
+        return $this->applySearchConditions($search, $fields, 'orWhere');
+    }
+
+    private function applySearchConditions(?array $search, array $fields, string $method): self
+    {
+        if (empty($search) || empty($fields)) {
             return $this;
         }
 
-        if (str_contains($search, ':')) {
-            [$f, $v] = explode(':', $search, 2);
-
-            if (!in_array($f, $searchableFields, true)) {
-                return $this;
+        $fieldMap = [];
+        foreach ($fields as $key => $value) {
+            if (is_string($key)) {
+                $fieldMap[$key] = $value;
+            } else {
+                $fieldMap[$value] = $value;
             }
-
-            $field = $fieldMap[$f] ?? $f;
-            $value = $v;
-        } else {
-            $defaultField = $searchableFields[0];
-            $field = $fieldMap[$defaultField] ?? $defaultField;
-            $value = $search;
         }
 
-        foreach (explode(' ', $value) as $kw) {
-            $kw = trim($kw);
-            if ($kw === '') {
-                continue;
+        $this->conditionBuilder->andGroup(function (ConditionBuilder $qb) use ($search, $fieldMap, $method) {
+            foreach ($search as $public => $value) {
+                if (!isset($fieldMap[$public])) {
+                    continue;
+                }
+
+                $col = $fieldMap[$public];
+                foreach (preg_split('/\s+/', (string)$value) as $kw) {
+                    $kw = trim($kw);
+                    if ($kw === '') {
+                        continue;
+                    }
+
+                    $qb->{$method}($col, 'LIKE', $kw);
+                }
             }
-            $this->conditionBuilder->andWhere($field, 'LIKE', $kw);
-        }
+        });
 
         return $this;
     }

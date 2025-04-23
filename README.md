@@ -18,7 +18,7 @@ A lightweight, fluent SQL query builder for PHP, providing secure and intuitive 
 - **Select Bindings**: Add parameters directly to the select statement for secure value binding.
 - **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
 - **Field Mapping**: Consistent field mapping for both search and orderBy operations across joins.
-- **Search Functionality**: Easily implement search with keywords across fields and optional fields mapping when using joins.
+- **searchAll / searchAny**: Flexible LIKE-based filtering across multiple fields (match ALL or ANY).
 - **Conditional WHERE**: Use `when()`, `andWhen()`, `orWhen()` to add conditions only if value is not null.
 ## 📥 Installation
 
@@ -81,8 +81,8 @@ $qb = new QueryBuilder($db);
 | `addOrderBy(string $field, string $direction, array $fieldMap = [])` | Add additional order criteria with mapping support.            |
 | `limit(int $limit, int $offset = 0)`                    | Limit and offset for pagination.                                           |
 | `paginate(int $page, int $limit)`                       | Paginate by page number.                                                   |
-| `smartSearch(?string $search, array $searchableFields, array $fieldMap = [])` | Add search conditions with field mapping support.          |
-
+| `searchAll(?array $search, array $fields)`              | LIKE search across multiple fields (match all).                            |
+| `searchAny(?array $search, array $fields)`              | LIKE search across multiple fields (match any).                            |
 ### Execution & Results
 
 | Method                           | Description                                               |
@@ -198,9 +198,7 @@ $qb->select()
     ->whereRaw('LENGTH(username) > ?i', [10])
     ->get();
 ```
-
-### Using WHERE
-
+### WHERE Grouping
 ```php
 $qb->select()
     ->from('orders|o')
@@ -210,9 +208,7 @@ $qb->select()
     })
     ->get();
 ```
-
-### Using HAVING
-
+### HAVING
 ```php
 $results = $qb
     ->select(['p.category', 'COUNT(p.id) AS total'])
@@ -221,137 +217,62 @@ $results = $qb
     ->having('total', '>', 10)
     ->get();
 ```
-
-You can also chain multiple conditions, use `andHavingGroup()`, `orHaving()`, etc., just like with `WHERE`.
-
-### Complex Grouping with WHERE
-
-```php
-$results = $qb->select()
-    ->from('orders')
-    ->whereGroup(function ($builder) {
-        $builder->where('status', '=', 'pending')
-                ->orWhere('priority', '>', 5);
-    })
-    ->get();
-```
-
-### Get a specific field value from the first row
-
+### Get Field Value
 ```php
 $email = $qb->select(['email'])
     ->from('users')
     ->where('id', '=', 42)
     ->getFieldValue('email');
 ```
-
-### Get an array of values for a specific field
-
+### Get Field Values
 ```php
 $emails = $qb->select(['email'])
     ->from('users')
     ->where('status', '=', 'active')
     ->getFieldValues('email');
-
-// Example result: ['user1@example.com', 'user2@example.com', ...]
 ```
-
 ### Indexed Results
-
 ```php
 $users = $qb->select()
     ->from('users')
     ->getIndexedBy('id'); 
-// Returns array keyed by user ID
 ```
-
-### Counting Records
-
+### Count
 ```php
 $total = $qb->select()
     ->from('posts')
     ->where('status', '=', 'published')
     ->count();
 ```
-
-### Using Field Mapping
-
-#### Search with field mapping:
-
+### searchAll Example (AND logic)
 ```php
-$fieldMap = [
-    'name' => 'p.name',
-    'category' => 'c.name'
-];
-
 $results = $qb
     ->select(['p.*', 'c.name AS category_name'])
     ->from('products|p')
     ->join('categories|c', 'c.id = p.category_id')
-    ->smartSearch('category:Electronics', ['name', 'category'], $fieldMap)
+    ->searchAll([
+        'product_name' => 'laptop',
+        'category_name' => 'electronics'
+    ], [
+        'product_name' => 'p.name',
+        'category_name' => 'c.name'
+    ])
     ->get();
 ```
-
-#### OrderBy with field mapping:
-
-```php
-$fieldMap = [
-    'name' => 'p.name',
-    'price' => 'p.price',
-    'category' => 'c.name'
-];
-
-$results = $qb
-    ->select(['p.*', 'c.name AS category_name'])
-    ->from('products|p')
-    ->join('categories|c', 'c.id = p.category_id')
-    ->smartSearch('Electronics', ['name', 'category'], $fieldMap)
-    ->orderBy('price', 'DESC', $fieldMap)
-    ->get();
-```
-
-### Using smartSearch
-
-#### Basic search across multiple fields:
-
+### searchAny Example (OR logic)
 ```php
 $results = $qb
     ->select()
     ->from('products|p')
-    ->smartSearch('laptop', ['p.name', 'p.description'])
+    ->searchAny([
+        'name' => 'gaming laptop',
+        'description' => 'portable'
+    ], [
+        'name' => 'p.name',
+        'description' => 'p.description'
+    ])
     ->get();
 ```
-
-#### Search in a specific field using colon syntax:
-
-```php
-$results = $qb
-    ->select()
-    ->from('products|p')
-    ->smartSearch('name:gaming laptop', ['p.name', 'p.description', 'p.category'])
-    ->get();
-```
-
-#### Combined field mapping for search and sorting:
-
-```php
-$fieldMap = [
-    'category_name' => 'c.name',
-    'product_name'  => 'p.name',
-    'price'         => 'p.price'
-];
-
-$results = $qb
-    ->select(['p.*', 'c.name AS category_name'])
-    ->from('products|p')
-    ->join('categories|c', 'c.id = p.category_id')
-    ->smartSearch('category_name:Electronics', ['category_name', 'product_name'], $fieldMap)
-    ->orderBy('price', 'DESC', $fieldMap)
-    ->get();
-```
-
-The search functionality supports multiple keywords (space-separated) and will apply them with an AND condition.
-
 ## ✅ Requirements
 
 - PHP 8.2+
