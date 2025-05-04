@@ -1,283 +1,677 @@
-# Solo Query Builder 🛠
+# Solo PHP Query Builder
 
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/solophp/query-builder)
+A lightweight and flexible SQL query builder for PHP 8.2+ with support for multiple SQL dialects.
+
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/solophp/query-builder)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-A lightweight, fluent SQL query builder for PHP, providing secure and intuitive database interactions.
+## Features
 
-## ✨ Features
+- 🚀 Fast and lightweight SQL builder with zero external dependencies
+- 💪 PHP 8.2+ support with strict typing
+- 🔒 Secure parameterized queries for protection against SQL injections
+- 🧩 Intuitive fluent interface for building queries
+- 🔄 Support for different DBMS (MySQL, PostgreSQL, SQLite) with extensibility
+- ⚡️ Optional PSR-16 caching of SELECT query results (local and global control)
+- 🧩 Advanced features: subqueries, raw SQL expressions, conditional queries, DISTINCT selection
 
-- **Fluent Interface**: Chainable methods for building queries.
-- **CRUD Support**: Quickly create, read, update, and delete.
-- **Secure Binding**: Automatic placeholder handling to prevent SQL injection.
-- **Alias Parsing**: Easy table aliasing (e.g., `answers_services|a`).
-- **Condition Groups**: Complex `WHERE` clauses with closures.
-- **Join Clauses**: `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN` support in `SELECT` and `UPDATE`.
-- **Raw SQL**: Safely insert raw SQL snippets when needed.
-- **RawExpression Support**: Use RawExpression objects in select fields for complex expressions.
-- **Select Bindings**: Add parameters directly to the select statement for secure value binding.
-- **HAVING Support**: Add `HAVING` clauses the same way you use `WHERE`.
-- **Field Mapping**: Consistent field mapping for both search and orderBy operations across joins.
-- **searchAll / searchAny**: Flexible LIKE-based filtering across multiple fields (match ALL or ANY).
-- **Conditional WHERE**: Use `when()`, `andWhen()`, `orWhen()` to add conditions only if value is not null.
-## 📥 Installation
-
-Install via Composer:
+## Installation
 
 ```bash
 composer require solophp/query-builder
 ```
 
-## 🚀 Usage
-
-### Initialization
+## Quick Start
 
 ```php
-use App\Core\QueryBuilder\QueryBuilder;
-use Solo\Database;
+use Solo\QueryBuilder\Utility\QueryFactory;
+use Solo\QueryBuilder\Facade\Query;
 
-$db = new Database(/* your config */);
-$qb = new QueryBuilder($db);
-```
+// Simple initialization using helper factory
+$query = QueryFactory::createWithPdo('localhost', 'username', 'password', 'database');
 
-## 📘 API Reference
+// Enable global cache (ExampleCache, TTL 600 seconds)
+use ExampleCache;
+Query::enableCache(new ExampleCache(), 600);
 
-### Core Methods
-
-| Method                       | Description                                          |
-|-----------------------------|------------------------------------------------------|
-| `select(array $fields, array $bindings = [])`     | Initiate a `SELECT` query with optional bindings.         |
-| `insert(string $table)`     | Initiate an `INSERT` query.                         |
-| `update(string $table)`     | Initiate an `UPDATE` query.                         |
-| `delete(string $table)`     | Initiate a `DELETE` query.                          |
-
-### Query Methods (SELECT)
-
-| Method                                                  | Description                                                                |
-|---------------------------------------------------------|----------------------------------------------------------------------------|
-| `from(string $table)`                                   | Specify the table and optional alias.                                      |
-| `distinct(bool $distinct = true)`                       | Use `SELECT DISTINCT`.                                                     |
-| `join(string $table, string $condition, string $type)`  | Add a JOIN clause (INNER / LEFT / RIGHT).                                  |
-| `leftJoin(string $table, string $condition)`            | Add a LEFT JOIN clause.                                                    |
-| `rightJoin(string $table, string $condition)`           | Add a RIGHT JOIN clause.                                                   |
-| `innerJoin(string $table, string $condition)`           | Add an INNER JOIN clause.                                                  |
-| `where(string $field, string $operator, mixed $value)`  | Basic WHERE condition.                                                     |
-| `andWhere(string $field, string $operator, mixed $value)` | AND condition (chained).                                                  |
-| `orWhere(string $field, string $operator, mixed $value)`  | OR condition.                                                              |
-| `when(string $field, string $operator, mixed $value)`   | WHERE condition only if value is not null.                                 |
-| `andWhen(string $field, string $operator, mixed $value)`| AND condition only if value is not null.                                   |
-| `orWhen(string $field, string $operator, mixed $value)` | OR condition only if value is not null.                                    |
-| `whereBetween(string $field, mixed $start, mixed $end)` | WHERE BETWEEN condition.                                                   |
-| `whereRaw(string $sql, array $bindings = [])`           | Insert a raw SQL snippet in WHERE.                                         |
-| `whereGroup(Closure $callback)`                         | Group multiple conditions via a closure.                                   |
-| `groupBy(string $field)`                                | GROUP BY a specified field.                                                |
-| `having(string $field, string $operator, mixed $value)` | HAVING condition (works like `where`).                                     |
-| `andHaving(string $field, string $operator, mixed $value)` | AND condition for HAVING.                                                |
-| `orHaving(string $field, string $operator, mixed $value)`  | OR condition for HAVING.                                                 |
-| `havingBetween(string $field, mixed $start, mixed $end)`  | HAVING BETWEEN condition.                                                |
-| `havingRaw(string $sql, array $bindings = [])`          | Insert a raw SQL snippet in HAVING.                                        |
-| `havingGroup(Closure $callback)`                        | Group multiple HAVING conditions via a closure.                            |
-| `orderBy(?string $field, ?string $direction, array $fieldMap = [])` | ORDER BY clause with optional field mapping support.            |
-| `addOrderBy(string $field, string $direction, array $fieldMap = [])` | Add additional order criteria with mapping support.            |
-| `limit(int $limit, int $offset = 0)`                    | Limit and offset for pagination.                                           |
-| `paginate(int $page, int $limit)`                       | Paginate by page number.                                                   |
-| `searchAll(?array $search, array $fields)`              | LIKE search across multiple fields (match all).                            |
-| `searchAny(?array $search, array $fields)`              | LIKE search across multiple fields (match any).                            |
-### Execution & Results
-
-| Method                           | Description                                               |
-|----------------------------------|-----------------------------------------------------------|
-| `get(?int $fetchMode = null)`    | Execute SELECT and return all rows.                       |
-| `getFirst(?int $fetchMode = null)` | Execute SELECT with `LIMIT 1` and return a single row.    |
-| `getFieldValue(string $field)`   | Fetch a single field value from the first result row.     |
-| `getFieldValues(string $field)`  | Fetch an array of all values for a specific field.        |
-| `getIndexedBy(string $field)`    | Return an associative array indexed by a specific field.  |
-| `count()`                        | Execute a `SELECT COUNT(*)` using the current conditions. |
-| `execute()`                      | Execute `INSERT`, `UPDATE`, or `DELETE`.                  |
-| `compile()`                      | Return the generated SQL string without executing.        |
-
-## 📚 Examples
-
-### SELECT
-
-```php
-$results = $qb
-    ->select(['id', 'title'])
-    ->from('posts|p')
-    ->where('p.created_at', '>', '2023-01-01')
-    ->leftJoin('users|u', 'u.id = p.author_id')
-    ->orderBy('p.id', 'DESC')
+// Select data
+$results = $query->from('users')
+    ->select('id', 'name', 'email')
+    ->where('status = ?', 'active')
+    ->orderBy('created_at', 'DESC')
     ->limit(10)
-    ->get();
-```
+    ->getAllAssoc();
 
-### SELECT With Bindings
-
-```php
-$results = $qb
-    ->select([
-        'id', 
-        'title', 
-        'DATE_FORMAT(created_at, ?s) AS formatted_date'
-    ], ['%Y-%m-%d'])
-    ->from('posts')
-    ->get();
-```
-
-### Using RawExpressions
-
-```php
-use Solo\Database\Expressions\RawExpression;
-
-$results = $qb
-    ->select([
-        'u.id',
-        'u.email',
-        new RawExpression('CONCAT(u.first_name, " ", u.last_name) AS full_name'),
-        new RawExpression('DATEDIFF(NOW(), u.created_at) AS days_registered')
-    ])
-    ->from('users|u')
-    ->where('u.status', '=', 'active')
-    ->get();
-```
-
-### SELECT WITH JOIN
-
-```php
-$results = $qb
-    ->select(['u.id', 'u.name', 'p.phone'])
-    ->from('users|u')
-    ->leftJoin('profiles|p', 'p.user_id = u.id')
-    ->where('u.status', '=', 'active')
-    ->get();
-```
-
-### INSERT
-
-```php
-$qb->insert('posts')
+// Insert data
+$insertId = $query->insert('users')
     ->values([
-        'title' => 'Hello World',
-        'content' => 'Welcome to my blog!',
-        'author_id' => 1
+        'name' => 'John Doe', 
+        'email' => 'john@example.com', 
+        'created_at' => date('Y-m-d H:i:s')
     ])
+    ->insertGetId();
+
+// Update data
+$affectedRows = $query->update('users')
+    ->set('status', 'inactive')
+    ->set('updated_at', date('Y-m-d H:i:s'))
+    ->where('last_login < ?', date('Y-m-d', strtotime('-6 months')))
+    ->execute();
+
+// Delete data
+$affectedRows = $query->delete('users')
+    ->where('id = ?', 5)
     ->execute();
 ```
 
-### UPDATE
+## Caching (PSR-16)
+
+This library supports caching SELECT query results via any PSR-16 cache implementation:
+
+- **Global cache**: call `Query::enableCache($cache, $ttl)` once in your bootstrap to apply caching to all queries.
+- **Per-instance cache**: chain `->withCache($cache, $ttl)` on a `Query` instance to override or set caching locally.
+- **Disable cache**: use `Query::disableCache()` to turn off global caching.
 
 ```php
-$qb->update('posts')
-    ->set(['title' => 'Updated Title'])
-    ->where('id', '=', 5)
-    ->execute();
+use Solo\QueryBuilder\Facade\Query;
+use ExampleCache;
+
+// Global cache for all Query instances (TTL 600s)
+Query::enableCache(new ExampleCache(), 600);
+
+// Local override (TTL 300s)
+$query = $query->withCache(new ExampleCache(), 300);
+$users = $query->from('users')->getAllAssoc();
+
+// Disable global cache entirely
+Query::disableCache();
 ```
 
-### UPDATE with JOIN
-```php
-$qb->update('users AS u')
-    ->innerJoin('profiles p', 'p.user_id = u.id')
-    ->set(['u.status' => 'active', 'p.updated_at' => 'NOW()'])
-    ->where('u.id', '=', 42)
-    ->execute();
-```
 
-### DELETE
+## Manual Initialization
+
+If you need more control over the initialization process, you can create all components manually:
 
 ```php
-$qb->delete('posts')
-    ->where('id', 'IN', [4, 5, 6])
-    ->execute();
+use Solo\QueryBuilder\Facade\Query;
+use Solo\QueryBuilder\Executors\PdoExecutor\PdoExecutor;
+use Solo\QueryBuilder\Executors\PdoExecutor\Connection;
+use Solo\QueryBuilder\Executors\PdoExecutor\Config;
+use Solo\QueryBuilder\Factory\BuilderFactory;
+use Solo\QueryBuilder\Factory\GrammarFactory;
+
+// Create factories
+$grammarFactory = new GrammarFactory();
+
+// Create PDO executor
+$config = new Config(
+    'localhost',        // host
+    'username',         // username
+    'password',         // password
+    'database',         // database
+    PDO::FETCH_ASSOC,   // fetchMode
+    'mysql',            // driver
+    null,               // port (optional)
+    []                  // options (optional)
+);
+
+$connection = new Connection($config);
+$executor = new PdoExecutor($connection);
+
+// Creating a BuilderFactory with executor
+$builderFactory = new BuilderFactory($grammarFactory, $executor, 'mysql');
+
+// Creating a Query instance
+$query = new Query($builderFactory);
 ```
 
-### Raw SQL
+## Building without Executing
+
+You can also build queries without executing them:
 
 ```php
-$qb->select()
-    ->from('users')
-    ->whereRaw('LENGTH(username) > ?i', [10])
-    ->get();
+// Build a query without executing
+[$sql, $bindings] = $query->from('users')
+    ->select('id', 'name')
+    ->where('status = ?', 'active')
+    ->build();
+
+// Now you have the SQL string and parameter bindings
+echo $sql;
+// SELECT `id`, `name` FROM `users` WHERE status = ?
+
+print_r($bindings);
+// ['active']
 ```
-### WHERE Grouping
+
+## Multi-DBMS Support
+
+The library implements SQL grammar abstraction, allowing you to work with different database systems using the same API.
+
+### Setting Default DBMS
+
 ```php
-$qb->select()
-    ->from('orders|o')
-    ->whereGroup(function ($builder) {
-        $builder->where('o.status', '=', 'pending')
-                ->orWhere('o.payment_status', '=', 'failed');
-    })
-    ->get();
+// Set MySQL as default grammar
+$query->setDatabaseType('mysql');
+
+// Set PostgreSQL as default grammar
+$query->setDatabaseType('postgresql'); // or 'postgres', 'pgsql'
+
+// Set SQLite as default grammar
+$query->setDatabaseType('sqlite');
 ```
-### HAVING
+
+### Specifying DBMS for a Query
+
 ```php
-$results = $qb
-    ->select(['p.category', 'COUNT(p.id) AS total'])
-    ->from('products|p')
-    ->groupBy('p.category')
-    ->having('total', '>', 10)
-    ->get();
+// Query with MySQL grammar
+$query->setDatabaseType('mysql');
+$mysqlResults = $query->from('users')
+    ->select('id', 'name')
+    ->where('status = ?', 'active')
+    ->getAllAssoc();
+
+// Query with PostgreSQL grammar
+$query->setDatabaseType('postgresql');
+$postgresResults = $query->from('users')
+    ->select('id', 'name')
+    ->where('status = ?', 'active')
+    ->getAllAssoc();
 ```
-### Get Field Value
+
+## SELECT Queries
+
+### Basic Selection Operations
+
 ```php
-$email = $qb->select(['email'])
-    ->from('users')
-    ->where('id', '=', 42)
-    ->getFieldValue('email');
-```
-### Get Field Values
-```php
-$emails = $qb->select(['email'])
-    ->from('users')
-    ->where('status', '=', 'active')
-    ->getFieldValues('email');
-```
-### Indexed Results
-```php
-$users = $qb->select()
-    ->from('users')
-    ->getIndexedBy('id'); 
-```
-### Count
-```php
-$total = $qb->select()
-    ->from('posts')
-    ->where('status', '=', 'published')
+// Select all records from table
+$allUsers = $query->from('users')->getAllAssoc();
+
+// Select specific columns
+$users = $query->from('users')
+    ->select('id', 'name', 'email')
+    ->getAllAssoc();
+
+// Use DISTINCT to select only unique values
+$uniqueCities = $query->from('users')
+    ->select('city')
+    ->distinct()
+    ->getAllAssoc();
+
+// WHERE conditions
+$activeUsers = $query->from('users')
+    ->where('status = ?', 'active')
+    ->getAllAssoc();
+
+// Multiple conditions
+$recentActiveUsers = $query->from('users')
+    ->where('status = ?', 'active')
+    ->where('created_at > ?', '2023-01-01')
+    ->getAllAssoc();
+
+// Sorting
+$sortedUsers = $query->from('users')
+    ->orderBy('name')                // ASC by default
+    ->addOrderBy('created_at', 'DESC') // additional sorting
+    ->getAllAssoc();
+
+// Limit and offset
+$paginatedUsers = $query->from('users')
+    ->limit(10, 100) // 10 records starting from offset 100
+    ->getAllAssoc();
+    
+// Pagination with page
+$paginatedUsers = $query->from('users')
+    ->paginate(25, 1) // 25 records per page, page 1
+    ->getAllAssoc();
+    
+// Get a single record
+$user = $query->from('users')
+    ->where('id = ?', 1)
+    ->getAssoc();
+    
+// Get records as objects
+$userObjects = $query->from('users')
+    ->where('status = ?', 'active')
+    ->getAllObj();
+    
+// Get a single value
+$count = $query->from('users')
+    ->select('COUNT(*) as count')
+    ->getValue();
+    
+// Get an array of email addresses
+$emails = $query->from('users')
+    ->select('id', 'email', 'name')
+    ->where('status = ?', 'active')
+    ->getColumn('email');
+// Result: ['john@example.com', 'jane@example.com', 'bob@example.com']
+
+// Get an associative array of [id => name]
+$userNames = $query->from('users')
+    ->select('id', 'name')
+    ->getColumn('name', 'id');
+// Result: [1 => 'John', 2 => 'Jane', 3 => 'Bob']
+
+// Get prices from products
+$prices = $query->from('products')
+    ->select('id', 'name', 'price')
+    ->where('category_id = ?', 5)
+    ->getColumn('price');
+// Result: [19.99, 24.99, 14.50]
+
+// Count the number of records
+$totalUsers = $query->from('users')->count();
+
+// Count records with conditions
+$activeUserCount = $query->from('users')
+    ->where('status = ?', 'active')
+    ->count();
+
+// Count specific fields or unique values
+$emailCount = $query->from('users')->count('email'); // Count of non-NULL emails
+$uniqueCities = $query->from('users')->count('city', true); // Count of unique cities
+
+// Count distinct with DISTINCT keyword for better readability
+$uniqueDepartments = $query->from('users')
+    ->select('department')
+    ->distinct()
     ->count();
 ```
-### searchAll Example (AND logic)
+
+### Raw SQL Expressions
+
+You can use raw SQL expressions by enclosing them in curly braces `{...}`:
+
 ```php
-$results = $qb
-    ->select(['p.*', 'c.name AS category_name'])
-    ->from('products|p')
-    ->join('categories|c', 'c.id = p.category_id')
-    ->searchAll([
-        'product_name' => 'laptop',
-        'category_name' => 'electronics'
-    ], [
-        'product_name' => 'p.name',
-        'category_name' => 'c.name'
-    ])
-    ->get();
+// Raw expressions in select
+$users = $query->from('users')
+    ->select('id', 'name', '{CONCAT(first_name, " ", last_name) as full_name}')
+    ->getAllAssoc();
+
+// Aggregation functions
+$userStats = $query->from('orders')
+    ->select('user_id', '{COUNT(*) as order_count}', '{SUM(amount) as total_spend}')
+    ->groupBy('user_id')
+    ->having('total_spend > ?', 1000)
+    ->getAllAssoc();
+
+// Date functions
+$ordersByMonth = $query->from('orders')
+    ->select('id', '{DATE_FORMAT(created_at, "%Y-%m") as month}', 'status')
+    ->where('created_at >= ?', '2023-01-01')
+    ->getAllAssoc();
+
+// Complex expressions
+$categorizedProducts = $query->from('products')
+    ->select(
+        'id', 
+        'name',
+        '{CASE WHEN price > 100 THEN "Premium" WHEN price > 50 THEN "Standard" ELSE "Basic" END as category}'
+    )
+    ->getAllAssoc();
+
+// Use DISTINCT with raw expressions
+$uniqueCategories = $query->from('products')
+    ->select('{DISTINCT category}')
+    ->getAllAssoc();
+
+// Alternative with distinct() method
+$uniqueCategories = $query->from('products')
+    ->select('category')
+    ->distinct()
+    ->getAllAssoc();
 ```
-### searchAny Example (OR logic)
+
+### Conditional Queries with `when()`
+
+The `when()` method allows you to add clauses to your query conditionally:
+
 ```php
-$results = $qb
-    ->select()
-    ->from('products|p')
-    ->searchAny([
-        'name' => 'gaming laptop',
-        'description' => 'portable'
-    ], [
-        'name' => 'p.name',
-        'description' => 'p.description'
-    ])
-    ->get();
+// Only apply where clause if condition is true
+$email = 'test@example.com';
+$status = null;
+
+$users = $query->from('users')
+    ->when($email !== null, function($q) use ($email) {
+        return $q->where('email = ?', $email);
+    })
+    ->when($status !== null, function($q) use ($status) {
+        return $q->where('status = ?', $status);
+    })
+    ->getAllAssoc();
+
+// Apply a default callback when condition is false
+$minPrice = null;
+$defaultMinPrice = 10;
+
+$products = $query->from('products')
+    ->when($minPrice !== null,
+        function($q) use ($minPrice) {
+            return $q->where('price >= ?', $minPrice);
+        },
+        function($q) use ($defaultMinPrice) {
+            return $q->where('price >= ?', $defaultMinPrice);
+        }
+    )
+    ->getAllAssoc();
 ```
-## ✅ Requirements
 
-- PHP 8.2+
-- [solophp/database](https://github.com/solophp/database) for database connections
+### Complex Conditions
 
-## 📄 License
+```php
+// Nested conditions
+$users = $query->from('users')
+    ->where(function($condition) {
+        $condition->where('status = ?', 'active')
+                 ->orWhere('role = ?', 'admin');
+    })
+    ->getAllAssoc();
 
-MIT License. See [LICENSE](LICENSE).
+// IN conditions
+$specificUsers = $query->from('users')
+    ->where('id IN (?, ?, ?)', 1, 2, 3)
+    ->getAllAssoc();
+
+// BETWEEN conditions
+$usersInRange = $query->from('users')
+    ->where('created_at BETWEEN ? AND ?', '2023-01-01', '2023-12-31')
+    ->getAllAssoc();
+```
+
+### JOIN Operations
+
+```php
+// INNER JOIN
+$ordersWithUsers = $query->from('orders')
+    ->select('orders.id', 'orders.amount', 'users.name')
+    ->join('users', 'orders.user_id = users.id')
+    ->getAllAssoc();
+    
+// JOIN with additional condition
+$activeOrdersWithUsers = $query->from('orders')
+    ->select('orders.id', 'orders.amount', 'users.name')
+    ->join('users', 'orders.user_id = users.id AND users.status = ?', 'active')
+    ->getAllAssoc();
+
+// LEFT JOIN
+$usersWithProfiles = $query->from('users')
+    ->select('users.id', 'users.name', 'profiles.bio')
+    ->leftJoin('profiles', 'users.id = profiles.user_id')
+    ->getAllAssoc();
+
+// RIGHT JOIN
+$usersWithOrders = $query->from('orders')
+    ->select('orders.id', 'users.name')
+    ->rightJoin('users', 'orders.user_id = users.id')
+    ->getAllAssoc();
+
+// FULL JOIN
+$allUsersProfiles = $query->from('users')
+    ->select('users.id', 'profiles.bio')
+    ->fullJoin('profiles', 'users.id = profiles.user_id')
+    ->getAllAssoc();
+```
+
+### Grouping and Aggregation
+
+```php
+// GROUP BY with aggregate functions
+$userOrderStats = $query->from('orders')
+    ->select('user_id', '{COUNT(*) as order_count}', '{SUM(amount) as total_spend}')
+    ->groupBy('user_id')
+    ->having('total_spend > ?', 1000)
+    ->getAllAssoc();
+```
+
+## INSERT Queries
+
+```php
+// Insert one record and get ID
+$userId = $query->insert('users')
+    ->values([
+        'name' => 'John Doe', 
+        'email' => 'john@example.com', 
+        'created_at' => date('Y-m-d H:i:s')
+    ])
+    ->insertGetId();
+
+// Insert one record and get affected rows
+$affectedRows = $query->insert('users')
+    ->values([
+        'name' => 'John Doe', 
+        'email' => 'john@example.com', 
+        'created_at' => date('Y-m-d H:i:s')
+    ])
+    ->execute();
+
+// Insert multiple records
+$affectedRows = $query->insert('logs')
+    ->values([
+        ['user_id' => 1, 'action' => 'login', 'created_at' => date('Y-m-d H:i:s')],
+        ['user_id' => 2, 'action' => 'logout', 'created_at' => date('Y-m-d H:i:s')]
+    ])
+    ->execute();
+```
+
+## UPDATE Queries
+
+```php
+// Update with array of values
+$affectedRows = $query->update('users')
+    ->set([
+        'status' => 'inactive',
+        'updated_at' => date('Y-m-d H:i:s')
+    ])
+    ->where('last_login < ?', date('Y-m-d', strtotime('-6 months')))
+    ->execute();
+
+// Or update by setting fields individually
+$affectedRows = $query->update('users')
+    ->set('status', 'inactive')
+    ->set('updated_at', date('Y-m-d H:i:s'))
+    ->where('id = ?', 5)
+    ->execute();
+```
+
+## DELETE Queries
+
+```php
+// Delete with condition
+$affectedRows = $query->delete('expired_tokens')
+    ->where('expires_at < ?', date('Y-m-d H:i:s'))
+    ->execute();
+
+// Delete by ID
+$affectedRows = $query->delete('users')
+    ->where('id = ?', 5)
+    ->execute();
+```
+
+## Checking for Records
+
+```php
+// Check if records exist
+$exists = $query->from('users')
+    ->where('status = ?', 'active')
+    ->exists();
+```
+
+## Query Execution
+
+The library provides a flexible mechanism for executing queries using the PDO executor or your own custom executor:
+
+### Using QueryFactory Utility
+
+The simplest way to initialize is with the `QueryFactory` utility class:
+
+```php
+use Solo\QueryBuilder\Utility\QueryFactory;
+
+// Create a Query instance with one line
+$query = QueryFactory::createWithPdo(
+    'localhost',       // host
+    'db_user',         // username
+    'db_password',     // password
+    'database_name',   // database
+    PDO::FETCH_ASSOC,  // fetchMode
+    'mysql',           // optional database type
+    null,              // optional port
+    []                 // optional PDO options
+);
+
+// Execute query and get results
+$users = $query->from('users')
+    ->select('id', 'name')
+    ->where('status = ?', 'active')
+    ->getAllAssoc();
+```
+
+### Manual Configuration
+
+For more control over the configuration:
+
+```php
+use Solo\QueryBuilder\Executors\PdoExecutor\PdoExecutor;
+use Solo\QueryBuilder\Executors\PdoExecutor\Connection;
+use Solo\QueryBuilder\Executors\PdoExecutor\Config;
+use Solo\QueryBuilder\Factory\BuilderFactory;
+use Solo\QueryBuilder\Factory\GrammarFactory;
+use Solo\QueryBuilder\Facade\Query;
+
+// Configure PDO connection
+$config = new Config(
+    'localhost',        // host
+    'db_user',          // username
+    'db_password',      // password
+    'database_name',    // database
+    PDO::FETCH_ASSOC,   // fetchMode
+    'mysql',            // driver
+    3306,               // port (optional)
+    []                  // options (optional)
+);
+
+// Create connection and executor
+$connection = new Connection($config);
+$executor = new PdoExecutor($connection);
+
+// Create factories
+$grammarFactory = new GrammarFactory();
+$builderFactory = new BuilderFactory($grammarFactory, $executor, 'mysql');
+
+// Create query builder
+$query = new Query($builderFactory);
+```
+
+## API Reference
+
+### Query Methods
+
+| Method | Description |
+|--------|-------------|
+| `from(string $table)` | Sets the table to select from |
+| `select(string ...$columns)` | Sets the columns to select |
+| `distinct(bool $value = true)` | Enables or disables DISTINCT selection |
+| `insert(string $table)` | Starts an insert query |
+| `update(string $table)` | Starts an update query |
+| `delete(string $table)` | Starts a delete query |
+| `setDatabaseType(string $type)` | Sets the database type (mysql, postgresql, sqlite) |
+
+### Where Conditions
+
+| Method | Description |
+|--------|-------------|
+| `where(string\|\Closure $expr, mixed ...$bindings)` | Adds a WHERE condition |
+| `orWhere(string\|\Closure $expr, mixed ...$bindings)` | Adds an OR WHERE condition |
+| `andWhere(string\|\Closure $expr, mixed ...$bindings)` | Adds an AND WHERE condition |
+| `when(bool $condition, callable $callback, ?callable $default = null)` | Conditionally adds clauses |
+
+### Joins
+
+| Method | Description |
+|--------|-------------|
+| `join(string $table, string $condition, mixed ...$bindings)` | Adds an INNER JOIN |
+| `leftJoin(string $table, string $condition, mixed ...$bindings)` | Adds a LEFT JOIN |
+| `rightJoin(string $table, string $condition, mixed ...$bindings)` | Adds a RIGHT JOIN |
+| `fullJoin(string $table, string $condition, mixed ...$bindings)` | Adds a FULL OUTER JOIN |
+| `joinSub(\Closure $callback, string $alias, string $condition, mixed ...$bindings)` | Adds a subquery join |
+
+### Clauses
+
+| Method | Description |
+|--------|-------------|
+| `groupBy(string ...$cols)` | Adds a GROUP BY clause |
+| `having(string\|\Closure $expr, mixed ...$bindings)` | Adds a HAVING clause |
+| `orHaving(string\|\Closure $expr, mixed ...$bindings)` | Adds an OR HAVING clause |
+| `orderBy(string $column, string $direction = 'ASC')` | Sets the ORDER BY clause |
+| `addOrderBy(string $column, string $direction = 'ASC')` | Adds an additional ORDER BY clause |
+| `limit(int $limit, ?int $offset = null)` | Adds a LIMIT clause |
+
+### Count Methods
+
+| Method | Description |
+|--------|-------------|
+| `count(?string $column = null, bool $distinct = false)` | Counts records |
+
+### Insert Methods
+
+| Method | Description |
+|--------|-------------|
+| `values(array $data)` | Sets values for insert |
+| `insertGetId()` | Executes the insert and returns the last insert ID |
+| `execute()` | Executes the insert and returns the number of affected rows |
+
+### Update Methods
+
+| Method | Description |
+|--------|-------------|
+| `set(string\|array $column, mixed $value = null)` | Sets the column(s) to update |
+| `execute()` | Executes the update and returns the number of affected rows |
+
+### Select Result Methods
+
+| Method | Description |
+|--------|-------------|
+| `getAssoc()` | Fetches a single row as an associative array |
+| `getAllAssoc()` | Fetches all rows as associative arrays |
+| `getObj(string $className = 'stdClass')` | Fetches a single row as an object |
+| `getAllObj(string $className = 'stdClass')` | Fetches all rows as objects |
+| `getValue()` | Fetches a single value from the first column |
+| `getColumn(string $column, ?string $keyColumn = null)` | Fetches an array of values from a single column |
+| `paginate(int $limit, int $page = 1)` | Sets pagination with page number (using LIMIT and OFFSET) |
+| `exists()` | Checks if any rows exist |
+| `count(?string $column = null, bool $distinct = false)` | Counts records that match the query |
+| `build()` | Returns the SQL and bindings without executing |
+
+## Extending Functionality
+
+### Adding Support for a New DBMS
+
+To add support for a new DBMS:
+
+1. Create a new grammar class inheriting from `AbstractGrammar`
+2. Add the new DBMS to `GrammarFactory`
+
+```php
+namespace Solo\QueryBuilder\Grammar;
+
+final class CustomGrammar extends AbstractGrammar
+{
+    protected string $tableQuote = '`';
+    protected string $columnQuote = '`';
+    
+    // No need to implement any methods as they are already in AbstractGrammar
+    // Just override the quote characters as needed
+}
+
+// Then update GrammarFactory to recognize your new dialect
+```
+
+## Requirements
+
+- PHP 8.2 or higher
+- PDO Extension (for database connections)
+
+## License
+
+MIT
