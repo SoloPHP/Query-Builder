@@ -33,7 +33,8 @@ class ExecutableTraitTest extends TestCase
             ->method('query')
             ->with(
                 $this->callback(function($sql) {
-                    return strpos($sql, 'UPDATE `users` SET `status` = ?') !== false;
+                    $this->assertStringContainsString('UPDATE `users` SET `status` = ?', $sql);
+                    return true;
                 }),
                 $this->equalTo(['active', 1])
             )
@@ -49,7 +50,7 @@ class ExecutableTraitTest extends TestCase
             ->where('id = ?', 1)
             ->execute();
 
-        $this->assertEquals(1, $result);
+        $this->assertSame(1, $result);
     }
 
     /**
@@ -118,7 +119,8 @@ class ExecutableTraitTest extends TestCase
             ->method('query')
             ->with(
                 $this->callback(function($sql) {
-                    return strpos($sql, 'UPDATE `users` SET `status` = ?') !== false;
+                    $this->assertStringContainsString('UPDATE `users` SET `status` = ?', $sql);
+                    return true;
                 }),
                 $this->equalTo(['inactive', 10])
             )
@@ -134,7 +136,7 @@ class ExecutableTraitTest extends TestCase
             ->where('last_login < ?', 10)
             ->execute();
 
-        $this->assertEquals(5, $result);
+        $this->assertSame(5, $result);
     }
 
     /**

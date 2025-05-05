@@ -15,7 +15,7 @@ interface GrammarInterface
 
     public function compileInsert(string $table, array $columns, array $rows): string;
 
-    public function compileUpdate(string $table, array $assignments, array $clauses): string;
+    public function compileUpdate(string $table, array $clauses): string;
 
     public function compileDelete(string $table, array $clauses): string;
 }

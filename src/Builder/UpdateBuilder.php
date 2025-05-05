@@ -37,8 +37,8 @@ class UpdateBuilder extends AbstractBuilder implements
         usort($this->clauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
 
         $clausesSql = array_map(fn($item) => $item['clause']->toSql(), $this->clauses);
-        $sql = $this->compiler->compileUpdate($this->table, $this->data, $clausesSql);
+        $sql = $this->compiler->compileUpdate($this->table, $clausesSql);
 
-        return [$sql, $this->getSetBindings()];
+        return [$sql, $this->getBindings()];
     }
 }

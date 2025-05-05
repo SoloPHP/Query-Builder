@@ -107,24 +107,38 @@ abstract class AbstractGrammar implements GrammarInterface
         return "INSERT INTO {$tableString} ({$columnsStr}) VALUES {$placeholders}";
     }
 
-    public function compileUpdate(string $table, array $assignments, array $clauses): string
+    public function compileUpdate(string $table, array $clauses): string
     {
-        $sets = [];
-        foreach ($assignments as $column => $value) {
-            if (is_string($value) && str_starts_with($value, '{') && str_ends_with($value, '}')) {
-                $rawValue = substr($value, 1, strlen($value) - 2);
-                $sets[] = $this->wrapIdentifierWithoutAlias($column) . " = " . $rawValue;
-            } else {
-                $sets[] = $this->wrapIdentifierWithoutAlias($column) . " = ?";
-            }
-        }
-        $setsStr = implode(', ', $sets);
-
         $tableObj = new TableIdentifier($table);
         $tableString = $this->wrapTable($tableObj);
 
-        $sql = "UPDATE {$tableString} SET {$setsStr}";
-        $sql .= $this->compileClauses($clauses);
+        $sql = "UPDATE {$tableString}";
+
+        $joinClauses = [];
+        $setClauses = [];
+        $whereClauses = [];
+
+        foreach ($clauses as $clause) {
+            if (strpos($clause, 'JOIN') !== false) {
+                $joinClauses[] = $clause;
+            } elseif (strpos($clause, 'SET') === 0) {
+                $setClauses[] = $clause;
+            } elseif (strpos($clause, 'WHERE') === 0) {
+                $whereClauses[] = $clause;
+            }
+        }
+
+        if (!empty($joinClauses)) {
+            $sql .= ' ' . implode(' ', $joinClauses);
+        }
+
+        if (!empty($setClauses)) {
+            $sql .= ' ' . implode(' ', $setClauses);
+        }
+
+        if (!empty($whereClauses)) {
+            $sql .= ' ' . implode(' ', $whereClauses);
+        }
 
         return $sql;
     }

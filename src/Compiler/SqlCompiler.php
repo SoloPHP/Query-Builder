@@ -35,9 +35,9 @@ final readonly class SqlCompiler implements CompilerInterface
         return $this->grammar->compileInsert($table, $columns, $rows);
     }
 
-    public function compileUpdate(string $table, array $assignments, array $clauses): string
+    public function compileUpdate(string $table, array $clauses): string
     {
-        return $this->grammar->compileUpdate($table, $assignments, $clauses);
+        return $this->grammar->compileUpdate($table, $clauses);
     }
 
     public function compileDelete(string $table, array $clauses): string

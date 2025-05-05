@@ -9,6 +9,7 @@ use Solo\QueryBuilder\Contracts\GrammarInterface;
 trait CapabilityBase
 {
     protected const PRIORITY_JOIN = 10;
+    protected const PRIORITY_SET = 15;
     protected const PRIORITY_WHERE = 20;
     protected const PRIORITY_GROUP_BY = 30;
     protected const PRIORITY_HAVING = 40;
@@ -18,5 +19,4 @@ trait CapabilityBase
     abstract protected function getGrammar(): GrammarInterface;
     abstract protected function addClause(ClauseInterface $clause, int $priority): static;
     abstract public function getBindings(): array;
-
 }
