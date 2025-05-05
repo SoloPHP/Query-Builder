@@ -21,4 +21,11 @@ class DeleteBuilder extends AbstractBuilder implements
     {
         return 'Delete';
     }
+
+    protected function doBuild(): array
+    {
+        $clausesSql = $this->getClausesSql();
+        $sql = $this->compiler->compileDelete($this->table, $clausesSql);
+        return [$sql, $this->getBindings()];
+    }
 }

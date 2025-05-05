@@ -5,6 +5,7 @@ namespace Solo\QueryBuilder\Clause;
 
 use Solo\QueryBuilder\Contracts\ClauseInterface;
 use Solo\QueryBuilder\Contracts\GrammarInterface;
+use Solo\QueryBuilder\Utility\Raw;
 
 final readonly class OrderByClause implements ClauseInterface
 {
@@ -38,10 +39,10 @@ final readonly class OrderByClause implements ClauseInterface
             $column = $ordering['column'];
             $direction = $ordering['direction'];
 
-            if (!str_starts_with($column, '{')) {
+            if (!Raw::is($column)) {
                 $column = $this->grammar->wrapIdentifier($column);
             } else {
-                $column = substr($column, 1, -1);
+                $column = Raw::get($column);
             }
 
             $result[] = $column . ' ' . $direction;

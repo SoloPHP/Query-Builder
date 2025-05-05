@@ -4,6 +4,7 @@ namespace Solo\QueryBuilder\Tests\Capability;
 
 use PHPUnit\Framework\TestCase;
 use Solo\QueryBuilder\Contracts\ExecutorInterface;
+use Solo\QueryBuilder\Exception\InvalidTableException;
 use Solo\QueryBuilder\Facade\Query;
 use Solo\QueryBuilder\Factory\BuilderFactory;
 use Solo\QueryBuilder\Factory\GrammarFactory;
@@ -155,7 +156,7 @@ class SelectionTraitTest extends TestCase
      */
     public function testInvalidEmptyFrom(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidTableException::class);
 
         // Missing from method
         $this->query

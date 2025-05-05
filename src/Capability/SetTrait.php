@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Solo\QueryBuilder\Capability;
 
 use Solo\QueryBuilder\Clause\SetClause;
+use Solo\QueryBuilder\Utility\Raw;
 
 trait SetTrait
 {
@@ -21,16 +22,27 @@ trait SetTrait
             $this->data[$column] = $value;
         }
 
+        $this->clearExistingSetClauses();
+        $this->addSetClause();
+
+        return $this;
+    }
+
+    private function clearExistingSetClauses(): void
+    {
         $this->clauses = array_filter($this->clauses, function ($item) {
             return !($item['clause'] instanceof SetClause);
         });
+    }
 
+    private function addSetClause(): void
+    {
         $assignments = [];
         $bindings = [];
 
         foreach ($this->data as $col => $val) {
-            if (is_string($val) && $this->isRawExpression($val)) {
-                $rawValue = $this->getRawContent($val);
+            if (is_string($val) && Raw::is($val)) {
+                $rawValue = Raw::get($val);
                 $assignments[] = $this->getGrammar()->wrapIdentifier($col) . " = " . $rawValue;
             } else {
                 $assignments[] = $this->getGrammar()->wrapIdentifier($col) . " = ?";
@@ -44,7 +56,5 @@ trait SetTrait
                 static::PRIORITY_SET
             );
         }
-
-        return $this;
     }
 }

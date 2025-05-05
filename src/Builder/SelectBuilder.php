@@ -56,23 +56,34 @@ class SelectBuilder extends AbstractBuilder implements
         return 'Select';
     }
 
+    protected function doBuild(): array
+    {
+        $columns = $this->columns ?? ['*'];
+        $distinct = $this->distinct ?? false;
+        $clausesSql = $this->getClausesSql();
+        $sql = $this->compiler->compileSelect($this->table, $columns, $clausesSql, $distinct);
+        return [$sql, $this->getBindings()];
+    }
+
     public function buildCount(?string $column = null, bool $distinct = false): array
     {
         $this->validateTableName();
 
-        $countExpression = '{';
-        $countExpression .= $distinct ? 'COUNT(DISTINCT ' : 'COUNT(';
-        $countExpression .= $column ? $this->getGrammar()->wrapIdentifier($column) : '*';
-        $countExpression .= ') as total_count}';
-
+        $countExpression = $this->buildCountExpression($column, $distinct);
         $clausesSql = $this->getClausesSql(function ($item) {
-            return !(
-                $item['clause'] instanceof OrderByClause ||
-                $item['clause'] instanceof LimitClause
-            );
+            return !($item['clause'] instanceof OrderByClause || $item['clause'] instanceof LimitClause);
         });
 
         $sql = $this->compiler->compileSelect($this->table, [$countExpression], $clausesSql, false);
         return [$sql, $this->getBindings()];
+    }
+
+    private function buildCountExpression(?string $column, bool $distinct): string
+    {
+        $countExpression = '{';
+        $countExpression .= $distinct ? 'COUNT(DISTINCT ' : 'COUNT(';
+        $countExpression .= $column ? $this->getGrammar()->wrapIdentifier($column) : '*';
+        $countExpression .= ') as total_count}';
+        return $countExpression;
     }
 }

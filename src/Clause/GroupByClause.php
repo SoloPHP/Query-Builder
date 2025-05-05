@@ -5,6 +5,7 @@ namespace Solo\QueryBuilder\Clause;
 
 use Solo\QueryBuilder\Contracts\ClauseInterface;
 use Solo\QueryBuilder\Contracts\GrammarInterface;
+use Solo\QueryBuilder\Utility\Raw;
 
 final readonly class GroupByClause implements ClauseInterface
 {
@@ -24,8 +25,8 @@ final readonly class GroupByClause implements ClauseInterface
 
         if ($this->grammar) {
             $wrappedColumns = array_map(function($column) {
-                return str_starts_with($column, '{') && str_ends_with($column, '}')
-                    ? substr($column, 1, -1)
+                return Raw::is($column)
+                    ? Raw::get($column)
                     : $this->grammar->wrapIdentifier($column);
             }, $this->columns);
         }

@@ -6,13 +6,11 @@ namespace Solo\QueryBuilder\Capability;
 trait ExecutableTrait
 {
     abstract public function build(): array;
+    abstract protected function validateExecutor(): void;
 
     public function execute(): int
     {
-        if (!$this->executor) {
-            throw new \RuntimeException('No executor available to execute the query');
-        }
-
+        $this->validateExecutor();
         [$sql, $bindings] = $this->build();
         $this->executor->query($sql, $bindings);
         return $this->executor->rowCount();

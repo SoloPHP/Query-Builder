@@ -9,10 +9,7 @@ trait InsertGetIdTrait
 
     public function insertGetId(): int|string|null
     {
-        if (!$this->executor) {
-            throw new \RuntimeException('No executor available to execute the query');
-        }
-
+        $this->validateExecutor();
         [$sql, $bindings] = $this->build();
         $this->executor->query($sql, $bindings);
         $id = $this->executor->lastInsertId();

@@ -5,6 +5,7 @@ namespace Solo\QueryBuilder\Condition;
 
 use Closure;
 use Solo\QueryBuilder\Contracts\GrammarInterface;
+use Solo\QueryBuilder\Utility\Raw;
 
 final class ConditionBuilder
 {
@@ -56,8 +57,8 @@ final class ConditionBuilder
             return $expr;
         }
 
-        if (str_starts_with($expr, '{') && str_ends_with($expr, '}')) {
-            return substr($expr, 1, -1);
+        if (Raw::is($expr)) {
+            return Raw::get($expr);
         }
 
         if (preg_match_all('/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/', $expr, $matches, PREG_SET_ORDER)) {

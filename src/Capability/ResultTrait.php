@@ -9,6 +9,7 @@ trait ResultTrait
 
     abstract public function build(): array;
     abstract public function buildCount(?string $column = null, bool $distinct = false): array;
+    abstract protected function validateExecutor(): void;
 
     public function getAssoc(): ?array
     {
@@ -52,22 +53,21 @@ trait ResultTrait
 
     public function getColumn(string $column, ?string $keyColumn = null): array
     {
-        return $this->fetchWithCache('column_' . $column . ($keyColumn ? '_by_' . $keyColumn : ''),
-            function ($sql, $bindings) use ($column, $keyColumn) {
-                $this->executor->query($sql, $bindings);
-                $results = $this->executor->fetchAll('assoc');
+        $cacheKey = 'column_' . $column . ($keyColumn ? '_by_' . $keyColumn : '');
+        return $this->fetchWithCache($cacheKey, function ($sql, $bindings) use ($column, $keyColumn) {
+            $this->executor->query($sql, $bindings);
+            $results = $this->executor->fetchAll('assoc');
 
-                if (empty($results)) {
-                    return [];
-                }
-
-                if ($keyColumn === null) {
-                    return array_column($results, $column);
-                } else {
-                    return array_column($results, $column, $keyColumn);
-                }
+            if (empty($results)) {
+                return [];
             }
-        );
+
+            if ($keyColumn === null) {
+                return array_column($results, $column);
+            } else {
+                return array_column($results, $column, $keyColumn);
+            }
+        });
     }
 
     public function exists(): bool
@@ -102,9 +102,7 @@ trait ResultTrait
             }
         }
 
-        if (!$this->executor) {
-            throw new \RuntimeException('No executor available to execute the query');
-        }
+        $this->validateExecutor();
 
         $result = $fetchCallback($sql, $bindings);
 

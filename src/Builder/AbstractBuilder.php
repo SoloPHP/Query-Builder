@@ -11,6 +11,7 @@ use Solo\QueryBuilder\Contracts\ExecutorInterface;
 use Solo\QueryBuilder\Cache\CacheManager;
 use Solo\QueryBuilder\Capability\WhenTrait;
 use Solo\QueryBuilder\Contracts\Capability\WhenCapable;
+use Solo\QueryBuilder\Exception\InvalidTableException;
 
 abstract class AbstractBuilder implements BuilderInterface, WhenCapable
 {
@@ -32,7 +33,7 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
     protected function validateTableName(): void
     {
         if (empty($this->table)) {
-            throw new \InvalidArgumentException('Table name is not specified.');
+            throw new InvalidTableException('Table name is not specified.');
         }
     }
 
@@ -42,25 +43,7 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return $this->doBuild();
     }
 
-    protected function doBuild(): array
-    {
-        $clausesSql = $this->getClausesSql();
-        $method = 'compile' . $this->getBuilderType();
-
-        $bindings = $this->getBindings();
-
-        if ($this->getBuilderType() === 'Select') {
-            $columns = $this->columns ?? ['*'];
-            $distinct = $this->distinct ?? false;
-            $sql = $this->compiler->$method($this->table, $columns, $clausesSql, $distinct);
-        } elseif ($this->getBuilderType() === 'Insert') {
-            $sql = $this->compiler->$method($this->table, [], []);
-        } else {
-            $sql = $this->compiler->$method($this->table, $clausesSql);
-        }
-
-        return [$sql, $bindings];
-    }
+    abstract protected function doBuild(): array;
 
     abstract protected function getBuilderType(): string;
 
@@ -84,22 +67,6 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return $this;
     }
 
-    protected function sortClauses(): void
-    {
-        usort($this->clauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
-    }
-
-    protected function compileClauses(): string
-    {
-        $this->sortClauses();
-
-        $pieces = array_map(
-            fn($item): string => $item['clause']->compileClause(),
-            $this->clauses
-        );
-        return trim(implode(' ', $pieces));
-    }
-
     protected function getClausesSql(?callable $filter = null): array
     {
         $filteredClauses = $filter
@@ -111,22 +78,9 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return array_map(fn($item) => $item['clause']->compileClause(), $filteredClauses);
     }
 
-    protected function isRawExpression(string $value): bool
-    {
-        return str_starts_with($value, '{') && str_ends_with($value, '}');
-    }
-
-    protected function getRawContent(string $value): string
-    {
-        if ($this->isRawExpression($value)) {
-            return substr($value, 1, -1);
-        }
-        return $value;
-    }
-
     public function toSql(): string
     {
-        [$sql, $bindings] = $this->build();
+        [$sql, ] = $this->build();
         return $sql;
     }
 
@@ -137,5 +91,12 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
             $all = array_merge($all, $item['clause']->bindings());
         }
         return $all;
+    }
+
+    protected function validateExecutor(): void
+    {
+        if (!$this->executor) {
+            throw new \RuntimeException('No executor available to execute the query');
+        }
     }
 }
