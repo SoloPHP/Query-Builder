@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Solo\QueryBuilder\Tests\Unit\Cache;
+namespace Solo\QueryBuilder\Tests\Cache;
 
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\CacheInterface;

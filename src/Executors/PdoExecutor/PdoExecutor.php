@@ -59,7 +59,7 @@ final class PdoExecutor implements ExecutorInterface
 
             if ($fetchMode === PDO::FETCH_CLASS && $className !== null) {
                 $this->stmt->setFetchMode($fetchMode, $className);
-                return $this->stmt->fetch();
+                return $this->stmt->fetch() ?: null;
             }
 
             return $this->stmt->fetch($fetchMode) ?: null;
