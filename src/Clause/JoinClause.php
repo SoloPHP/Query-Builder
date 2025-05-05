@@ -5,10 +5,13 @@ namespace Solo\QueryBuilder\Clause;
 
 use Solo\QueryBuilder\Contracts\ClauseInterface;
 use Solo\QueryBuilder\Contracts\GrammarInterface;
+use Solo\QueryBuilder\Enum\ClausePriority;
 use Solo\QueryBuilder\Identifier\TableIdentifier;
 
 final readonly class JoinClause implements ClauseInterface
 {
+    public const TYPE = ClausePriority::JOIN;
+
     public function __construct(
         private string            $type,
         private TableIdentifier   $table,

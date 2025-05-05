@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Solo\QueryBuilder\Grammar;
 
 use Solo\QueryBuilder\Contracts\GrammarInterface;
+use Solo\QueryBuilder\Enum\ClausePriority;
 use Solo\QueryBuilder\Identifier\TableIdentifier;
 
 abstract class AbstractGrammar implements GrammarInterface
@@ -119,12 +120,25 @@ abstract class AbstractGrammar implements GrammarInterface
         $whereClauses = [];
 
         foreach ($clauses as $clause) {
-            if (strpos($clause, 'JOIN') !== false) {
-                $joinClauses[] = $clause;
-            } elseif (strpos($clause, 'SET') === 0) {
-                $setClauses[] = $clause;
-            } elseif (strpos($clause, 'WHERE') === 0) {
-                $whereClauses[] = $clause;
+            $compiledClause = $clause->compileClause();
+
+            if (empty($compiledClause)) {
+                continue;
+            }
+
+            $clauseClass = get_class($clause);
+            $clauseType = $clauseClass::TYPE;
+
+            switch ($clauseType) {
+                case ClausePriority::JOIN:
+                    $joinClauses[] = $compiledClause;
+                    break;
+                case ClausePriority::SET:
+                    $setClauses[] = $compiledClause;
+                    break;
+                case ClausePriority::WHERE:
+                    $whereClauses[] = $compiledClause;
+                    break;
             }
         }
 
@@ -178,6 +192,6 @@ abstract class AbstractGrammar implements GrammarInterface
 
     protected function compileClauses(array $clauses): string
     {
-        return !empty($clauses) ? ' ' . implode(' ', $clauses) : '';
+        return !empty($clauses) ? ' ' . implode(' ', array_map(fn($clause) => $clause->compileClause(), $clauses)) : '';
     }
 }

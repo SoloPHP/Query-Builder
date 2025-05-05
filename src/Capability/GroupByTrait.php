@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Solo\QueryBuilder\Capability;
 
 use Solo\QueryBuilder\Clause\GroupByClause;
+use Solo\QueryBuilder\Enum\ClausePriority;
 
 trait GroupByTrait
 {
@@ -13,7 +14,7 @@ trait GroupByTrait
     {
         return $this->addClause(
             new GroupByClause($cols, $this->getGrammar()),
-            static::PRIORITY_GROUP_BY
+            ClausePriority::GROUP_BY
         );
     }
 }

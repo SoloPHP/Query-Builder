@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Solo\QueryBuilder\Capability;
 
 use Solo\QueryBuilder\Clause\OrderByClause;
+use Solo\QueryBuilder\Enum\ClausePriority;
 
 trait OrderByTrait
 {
@@ -13,13 +14,11 @@ trait OrderByTrait
     {
         $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
 
-        $this->clauses = array_filter($this->clauses, function ($item) {
-            return !($item['clause'] instanceof OrderByClause);
-        });
+        $this->filterClauses(OrderByClause::class);
 
         return $this->addClause(
             new OrderByClause([['column' => $column, 'direction' => $direction]], $this->getGrammar()),
-            static::PRIORITY_ORDER_BY
+            ClausePriority::ORDER_BY
         );
     }
 
@@ -29,7 +28,7 @@ trait OrderByTrait
 
         return $this->addClause(
             new OrderByClause([['column' => $column, 'direction' => $direction]], $this->getGrammar()),
-            static::PRIORITY_ORDER_BY
+            ClausePriority::ORDER_BY
         );
     }
 }

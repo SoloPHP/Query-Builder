@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Solo\QueryBuilder\Capability;
 
 use Solo\QueryBuilder\Condition\ConditionBuilder;
+use Solo\QueryBuilder\Enum\ClausePriority;
 
 trait ConditionTrait
 {
@@ -11,7 +12,7 @@ trait ConditionTrait
 
     protected ?ConditionBuilder $conditions = null;
 
-    protected function addCondition(string $type, int $priority, string $logicalOperator, string|\Closure $expr, array $bindings): static
+    protected function addCondition(string $type, ClausePriority $priority, string $logicalOperator, string|\Closure $expr, array $bindings): static
     {
         $grammar = $this->getGrammar();
 

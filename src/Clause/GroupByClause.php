@@ -5,10 +5,13 @@ namespace Solo\QueryBuilder\Clause;
 
 use Solo\QueryBuilder\Contracts\ClauseInterface;
 use Solo\QueryBuilder\Contracts\GrammarInterface;
+use Solo\QueryBuilder\Enum\ClausePriority;
 use Solo\QueryBuilder\Utility\Raw;
 
 final readonly class GroupByClause implements ClauseInterface
 {
+    public const TYPE = ClausePriority::GROUP_BY;
+
     public function __construct(
         private array $columns,
         private ?GrammarInterface $grammar = null

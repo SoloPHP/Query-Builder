@@ -8,24 +8,23 @@ use Solo\QueryBuilder\Contracts\ClauseInterface;
 use Solo\QueryBuilder\Contracts\CompilerInterface;
 use Solo\QueryBuilder\Contracts\GrammarInterface;
 use Solo\QueryBuilder\Contracts\ExecutorInterface;
-use Solo\QueryBuilder\Cache\CacheManager;
-use Solo\QueryBuilder\Capability\WhenTrait;
-use Solo\QueryBuilder\Contracts\Capability\WhenCapable;
 use Solo\QueryBuilder\Exception\InvalidTableException;
+use Solo\QueryBuilder\Enum\ClausePriority;
 
-abstract class AbstractBuilder implements BuilderInterface, WhenCapable
+abstract class AbstractBuilder implements BuilderInterface
 {
-    use WhenTrait;
+    public const TYPE = '';
 
-    protected array $clauses = [];
     protected string $table = '';
     protected array $bindings = [];
+
+    /** @var array<array{0: int, 1: ClauseInterface}> */
+    protected array $clauses = [];
 
     public function __construct(
         string $table = '',
         protected readonly CompilerInterface $compiler,
-        protected ?ExecutorInterface $executor = null,
-        protected ?CacheManager $cacheManager = null
+        protected ?ExecutorInterface $executor = null
     ) {
             $this->table = $table;
         }
@@ -37,6 +36,13 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         }
     }
 
+    protected function validateExecutor(): void
+    {
+        if (!$this->executor) {
+            throw new \RuntimeException('No executor available to execute the query');
+        }
+    }
+
     public function build(): array
     {
         $this->validateTableName();
@@ -45,17 +51,14 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
 
     abstract protected function doBuild(): array;
 
-    protected function getGrammar(): GrammarInterface
+    final protected function getGrammar(): GrammarInterface
     {
         return $this->compiler->getGrammar();
     }
 
-    protected function addClause(ClauseInterface $clause, int $priority): static
+    protected function addClause(ClauseInterface $clause, ClausePriority $priority): static
     {
-        $this->clauses[] = [
-            'clause' => $clause,
-            'priority' => $priority
-        ];
+        $this->clauses[] = [$priority->value, $clause];
         return $this;
     }
 
@@ -65,15 +68,17 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return $this;
     }
 
-    protected function getClausesSql(?callable $filter = null): array
+    protected function filterClauses(string $clauseClassName): void
     {
-        $filteredClauses = $filter
-            ? array_filter($this->clauses, $filter)
-            : $this->clauses;
+        $this->clauses = array_filter($this->clauses, function ($item) use ($clauseClassName) {
+            return !($item[1] instanceof $clauseClassName);
+        });
+    }
 
-        usort($filteredClauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
-
-        return array_map(fn($item) => $item['clause']->compileClause(), $filteredClauses);
+    protected function getClauseObjects(): array
+    {
+        usort($this->clauses, static fn($a, $b) => $a[0] <=> $b[0]);
+        return array_map(fn($item) => $item[1], $this->clauses);
     }
 
     public function toSql(): string
@@ -86,15 +91,8 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
     {
         $all = $this->bindings;
         foreach ($this->clauses as $item) {
-            $all = array_merge($all, $item['clause']->bindings());
+            $all = array_merge($all, $item[1]->bindings());
         }
         return $all;
-    }
-
-    protected function validateExecutor(): void
-    {
-        if (!$this->executor) {
-            throw new \RuntimeException('No executor available to execute the query');
-        }
     }
 }

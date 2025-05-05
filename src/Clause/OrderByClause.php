@@ -5,10 +5,13 @@ namespace Solo\QueryBuilder\Clause;
 
 use Solo\QueryBuilder\Contracts\ClauseInterface;
 use Solo\QueryBuilder\Contracts\GrammarInterface;
+use Solo\QueryBuilder\Enum\ClausePriority;
 use Solo\QueryBuilder\Utility\Raw;
 
 final readonly class OrderByClause implements ClauseInterface
 {
+    public const TYPE = ClausePriority::ORDER_BY;
+
     public function __construct(
         private array             $orderings,
         private ?GrammarInterface $grammar = null

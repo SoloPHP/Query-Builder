@@ -4,9 +4,12 @@ declare(strict_types=1);
 namespace Solo\QueryBuilder\Clause;
 
 use Solo\QueryBuilder\Contracts\ClauseInterface;
+use Solo\QueryBuilder\Enum\ClausePriority;
 
 final readonly class ValuesClause implements ClauseInterface
 {
+    public const TYPE = ClausePriority::VALUES;
+
     public function __construct(
         private array $columns,
         private array $rows

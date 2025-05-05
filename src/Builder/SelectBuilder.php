@@ -3,18 +3,6 @@ declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Builder;
 
-use Solo\QueryBuilder\Clause\LimitClause;
-use Solo\QueryBuilder\Clause\OrderByClause;
-use Solo\QueryBuilder\Contracts\Capability\{
-    WhereCapable,
-    JoinCapable,
-    GroupByCapable,
-    HavingCapable,
-    OrderByCapable,
-    LimitCapable,
-    SelectionCapable,
-    ResultCapable
-};
 use Solo\QueryBuilder\Capability\{
     WhereTrait,
     JoinTrait,
@@ -23,8 +11,23 @@ use Solo\QueryBuilder\Capability\{
     OrderByTrait,
     LimitTrait,
     SelectionTrait,
-    ResultTrait
+    ResultTrait,
+    WhenTrait
 };
+use Solo\QueryBuilder\Contracts\Capability\{
+    WhereCapable,
+    JoinCapable,
+    GroupByCapable,
+    HavingCapable,
+    OrderByCapable,
+    LimitCapable,
+    SelectionCapable,
+    ResultCapable,
+    WhenCapable
+};
+use Solo\QueryBuilder\Contracts\CompilerInterface;
+use Solo\QueryBuilder\Contracts\ExecutorInterface;
+use Solo\QueryBuilder\Cache\CacheManager;
 
 class SelectBuilder extends AbstractBuilder implements
     WhereCapable,
@@ -34,8 +37,11 @@ class SelectBuilder extends AbstractBuilder implements
     OrderByCapable,
     LimitCapable,
     SelectionCapable,
-    ResultCapable
+    ResultCapable,
+    WhenCapable
 {
+    public const TYPE = 'Select';
+
     use WhereTrait;
     use JoinTrait;
     use GroupByTrait;
@@ -44,6 +50,19 @@ class SelectBuilder extends AbstractBuilder implements
     use LimitTrait;
     use SelectionTrait;
     use ResultTrait;
+    use WhenTrait;
+
+    protected ?CacheManager $cacheManager = null;
+
+    public function __construct(
+        string $table,
+        CompilerInterface $compiler,
+        ?ExecutorInterface $executor = null,
+        ?CacheManager $cacheManager = null
+    ) {
+        parent::__construct($table, $compiler, $executor);
+        $this->cacheManager = $cacheManager;
+    }
 
     public function from(string $table): static
     {
@@ -53,10 +72,8 @@ class SelectBuilder extends AbstractBuilder implements
 
     protected function doBuild(): array
     {
-        $columns = $this->columns ?? ['*'];
-        $distinct = $this->distinct ?? false;
-        $clausesSql = $this->getClausesSql();
-        $sql = $this->compiler->compileSelect($this->table, $columns, $clausesSql, $distinct);
+        $clauseObjects = $this->getClauseObjects();
+        $sql = $this->compiler->compileSelect($this->table, $this->columns, $clauseObjects, $this->distinct);
         return [$sql, $this->getBindings()];
     }
 
@@ -65,11 +82,16 @@ class SelectBuilder extends AbstractBuilder implements
         $this->validateTableName();
 
         $countExpression = $this->buildCountExpression($column, $distinct);
-        $clausesSql = $this->getClausesSql(function ($item) {
-            return !($item['clause'] instanceof OrderByClause || $item['clause'] instanceof LimitClause);
+
+        $countClauses = array_filter($this->clauses, function ($item) {
+            $clauseClass = get_class($item[1]);
+            return !str_ends_with($clauseClass, 'OrderByClause') &&
+                   !str_ends_with($clauseClass, 'LimitClause');
         });
 
-        $sql = $this->compiler->compileSelect($this->table, [$countExpression], $clausesSql, false);
+        $clauseObjects = array_map(fn($item) => $item[1], $countClauses);
+
+        $sql = $this->compiler->compileSelect($this->table, [$countExpression], $clauseObjects, false);
         return [$sql, $this->getBindings()];
     }
 

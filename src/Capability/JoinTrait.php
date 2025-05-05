@@ -5,6 +5,7 @@ namespace Solo\QueryBuilder\Capability;
 
 use Solo\QueryBuilder\Clause\JoinClause;
 use Solo\QueryBuilder\Identifier\TableIdentifier;
+use Solo\QueryBuilder\Enum\ClausePriority;
 
 trait JoinTrait
 {
@@ -15,7 +16,7 @@ trait JoinTrait
         $tid = new TableIdentifier($table);
         return $this->addClause(
             new JoinClause('INNER', $tid, $condition, $bindings, $this->getGrammar()),
-            static::PRIORITY_JOIN
+            ClausePriority::JOIN
         );
     }
 
@@ -24,7 +25,7 @@ trait JoinTrait
         $tid = new TableIdentifier($table);
         return $this->addClause(
             new JoinClause('LEFT', $tid, $condition, $bindings, $this->getGrammar()),
-            static::PRIORITY_JOIN
+            ClausePriority::JOIN
         );
     }
 
@@ -33,7 +34,7 @@ trait JoinTrait
         $tid = new TableIdentifier($table);
         return $this->addClause(
             new JoinClause('RIGHT', $tid, $condition, $bindings, $this->getGrammar()),
-            static::PRIORITY_JOIN
+            ClausePriority::JOIN
         );
     }
 
@@ -42,13 +43,13 @@ trait JoinTrait
         $tid = new TableIdentifier($table);
         return $this->addClause(
             new JoinClause('FULL OUTER', $tid, $condition, $bindings, $this->getGrammar()),
-            static::PRIORITY_JOIN
+            ClausePriority::JOIN
         );
     }
 
     public function joinSub(\Closure $callback, string $alias, string $condition, mixed ...$bindings): static
     {
-        $className = $this::class; // Get the current class name
+        $className = $this::class;
         $subBuilder = new $className('', $this->compiler);
         $callback($subBuilder);
 
@@ -60,7 +61,7 @@ trait JoinTrait
 
         return $this->addClause(
             new JoinClause('INNER', $subQueryTable, $condition, $allBindings, $this->getGrammar()),
-            static::PRIORITY_JOIN
+            ClausePriority::JOIN
         );
     }
 }

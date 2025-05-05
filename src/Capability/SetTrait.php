@@ -5,6 +5,7 @@ namespace Solo\QueryBuilder\Capability;
 
 use Solo\QueryBuilder\Clause\SetClause;
 use Solo\QueryBuilder\Utility\Raw;
+use Solo\QueryBuilder\Enum\ClausePriority;
 
 trait SetTrait
 {
@@ -30,9 +31,7 @@ trait SetTrait
 
     private function clearExistingSetClauses(): void
     {
-        $this->clauses = array_filter($this->clauses, function ($item) {
-            return !($item['clause'] instanceof SetClause);
-        });
+        $this->filterClauses(SetClause::class);
     }
 
     private function addSetClause(): void
@@ -53,7 +52,7 @@ trait SetTrait
         if (!empty($assignments)) {
             $this->addClause(
                 new SetClause($assignments, $bindings),
-                static::PRIORITY_SET
+                ClausePriority::SET
             );
         }
     }
