@@ -51,11 +51,6 @@ class SelectBuilder extends AbstractBuilder implements
         return $this;
     }
 
-    protected function getBuilderType(): string
-    {
-        return 'Select';
-    }
-
     protected function doBuild(): array
     {
         $columns = $this->columns ?? ['*'];

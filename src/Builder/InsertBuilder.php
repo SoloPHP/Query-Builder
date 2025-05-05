@@ -19,11 +19,6 @@ class InsertBuilder extends AbstractBuilder implements
     use ValuesTrait;
     use InsertGetIdTrait;
 
-    protected function getBuilderType(): string
-    {
-        return 'Insert';
-    }
-
     protected function doBuild(): array
     {
         $sql = $this->compiler->compileInsert(

@@ -3,24 +3,17 @@ declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Builder;
 
-use Solo\QueryBuilder\Contracts\Capability\{
-    WhereCapable,
-    ExecutableCapable
-};
+use Solo\QueryBuilder\Contracts\Capability\{JoinCapable, WhereCapable, ExecutableCapable};
 use Solo\QueryBuilder\Capability\{JoinTrait, WhereTrait, ExecutableTrait};
 
 class DeleteBuilder extends AbstractBuilder implements
     WhereCapable,
-    ExecutableCapable
+    ExecutableCapable,
+    JoinCapable
 {
     use WhereTrait;
     use JoinTrait;
     use ExecutableTrait;
-
-    protected function getBuilderType(): string
-    {
-        return 'Delete';
-    }
 
     protected function doBuild(): array
     {

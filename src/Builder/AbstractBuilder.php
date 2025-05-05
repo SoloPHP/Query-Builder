@@ -45,8 +45,6 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
 
     abstract protected function doBuild(): array;
 
-    abstract protected function getBuilderType(): string;
-
     protected function getGrammar(): GrammarInterface
     {
         return $this->compiler->getGrammar();
