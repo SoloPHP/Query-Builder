@@ -11,6 +11,8 @@ use Solo\QueryBuilder\Contracts\ExecutorInterface;
 use Solo\QueryBuilder\Cache\CacheManager;
 use Solo\QueryBuilder\Capability\WhenTrait;
 use Solo\QueryBuilder\Contracts\Capability\WhenCapable;
+use Solo\QueryBuilder\Clause\OrderByClause;
+use Solo\QueryBuilder\Clause\LimitClause;
 
 abstract class AbstractBuilder implements BuilderInterface, WhenCapable
 {
@@ -57,9 +59,14 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return $this;
     }
 
-    protected function compileClauses(): string
+    protected function sortClauses(): void
     {
         usort($this->clauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
+    }
+
+    protected function compileClauses(): string
+    {
+        $this->sortClauses();
 
         $pieces = array_map(
             fn($item): string => $item['clause']->compileClause(),
@@ -68,16 +75,14 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return trim(implode(' ', $pieces));
     }
 
-    protected function getClausesSql(): array
+    protected function getClausesSql(?callable $filter = null): array
     {
-        usort($this->clauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
-        return array_map(fn($item) => $item['clause']->compileClause(), $this->clauses);
-    }
+        $filteredClauses = $filter
+            ? array_filter($this->clauses, $filter)
+            : $this->clauses;
 
-    protected function getFilteredClausesSql(callable $filter): array
-    {
-        $filteredClauses = array_filter($this->clauses, $filter);
         usort($filteredClauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
+
         return array_map(fn($item) => $item['clause']->compileClause(), $filteredClauses);
     }
 

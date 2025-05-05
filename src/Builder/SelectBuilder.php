@@ -67,7 +67,7 @@ class SelectBuilder extends AbstractBuilder implements
         $countExpression .= $column ? $this->getGrammar()->wrapIdentifier($column) : '*';
         $countExpression .= ') as total_count}';
 
-        $clausesSql = $this->getFilteredClausesSql(function ($item) {
+        $clausesSql = $this->getClausesSql(function ($item) {
             return !(
                 $item['clause'] instanceof OrderByClause ||
                 $item['clause'] instanceof LimitClause

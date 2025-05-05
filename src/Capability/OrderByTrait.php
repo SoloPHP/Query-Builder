@@ -9,8 +9,6 @@ trait OrderByTrait
 {
     use CapabilityBase;
 
-    protected array $clauses = [];
-
     public function orderBy(string $column, string $direction = 'ASC'): static
     {
         $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
@@ -34,5 +32,4 @@ trait OrderByTrait
             static::PRIORITY_ORDER_BY
         );
     }
-
 }
