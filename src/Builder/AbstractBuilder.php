@@ -20,15 +20,28 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
     protected string $table = '';
 
     public function __construct(
+        string $table = '',
         protected readonly CompilerInterface $compiler,
         protected ?ExecutorInterface $executor = null,
-        protected ?CacheManager $cacheManager = null,
-        ?string $table = null
+        protected ?CacheManager $cacheManager = null
     ) {
-        if ($table !== null) {
             $this->table = $table;
         }
+
+    protected function validateTableName(): void
+    {
+        if (empty($this->table)) {
+            throw new \InvalidArgumentException('Table name is not specified.');
+        }
     }
+
+    public function build(): array
+    {
+        $this->validateTableName();
+        return $this->doBuild();
+    }
+
+    abstract protected function doBuild(): array;
 
     protected function getGrammar(): GrammarInterface
     {
@@ -82,6 +95,4 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         }
         return $all;
     }
-
-    abstract public function build(): array;
 }

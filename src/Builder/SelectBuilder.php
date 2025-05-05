@@ -5,9 +5,6 @@ namespace Solo\QueryBuilder\Builder;
 
 use Solo\QueryBuilder\Clause\LimitClause;
 use Solo\QueryBuilder\Clause\OrderByClause;
-use Solo\QueryBuilder\Contracts\CompilerInterface;
-use Solo\QueryBuilder\Contracts\ExecutorInterface;
-use Solo\QueryBuilder\Cache\CacheManager;
 use Solo\QueryBuilder\Contracts\Capability\{
     WhereCapable,
     JoinCapable,
@@ -48,27 +45,14 @@ class SelectBuilder extends AbstractBuilder implements
     use SelectionTrait;
     use ResultTrait;
 
-    public function __construct(
-        string $table,
-        CompilerInterface $compiler,
-        ?ExecutorInterface $executor = null,
-        ?CacheManager $cacheManager = null
-    ) {
-        parent::__construct($compiler, $executor, $cacheManager, $table);
-    }
-
     public function from(string $table): static
     {
         $this->table = $table;
         return $this;
     }
 
-    public function build(): array
+    protected function doBuild(): array
     {
-        if (empty($this->table)) {
-            throw new \InvalidArgumentException('Table name is not specified. Use "from" method to set the table.');
-        }
-
         $clausesSql = $this->getClausesSql();
         $sql = $this->compiler->compileSelect($this->table, $this->columns, $clausesSql, $this->distinct);
         return [$sql, $this->getBindings()];
@@ -76,9 +60,7 @@ class SelectBuilder extends AbstractBuilder implements
 
     public function buildCount(?string $column = null, bool $distinct = false): array
     {
-        if (empty($this->table)) {
-            throw new \InvalidArgumentException('Table name is not specified. Use "from" method to set the table.');
-        }
+        $this->validateTableName();
 
         $countExpression = '{';
         $countExpression .= $distinct ? 'COUNT(DISTINCT ' : 'COUNT(';

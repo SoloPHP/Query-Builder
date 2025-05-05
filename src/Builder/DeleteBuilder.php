@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Builder;
 
-use Solo\QueryBuilder\Cache\CacheManager;
-use Solo\QueryBuilder\Contracts\CompilerInterface;
-use Solo\QueryBuilder\Contracts\ExecutorInterface;
 use Solo\QueryBuilder\Contracts\Capability\{
     WhereCapable,
     ExecutableCapable
@@ -20,21 +17,8 @@ class DeleteBuilder extends AbstractBuilder implements
     use JoinTrait;
     use ExecutableTrait;
 
-    public function __construct(
-        string $table,
-        CompilerInterface $compiler,
-        ?ExecutorInterface $executor = null,
-        ?CacheManager $cacheManager = null
-    ) {
-        parent::__construct($compiler, $executor, $cacheManager, $table);
-    }
-
-    public function build(): array
+    protected function doBuild(): array
     {
-        if (empty($this->table)) {
-            throw new \InvalidArgumentException('Table name is not specified.');
-        }
-
         $clausesSql = $this->getClausesSql();
         $sql = $this->compiler->compileDelete($this->table, $clausesSql);
 
