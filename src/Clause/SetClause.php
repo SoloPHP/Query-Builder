@@ -13,7 +13,7 @@ final readonly class SetClause implements ClauseInterface
     ) {
     }
 
-    public function toSql(): string
+    public function compileClause(): string
     {
         return 'SET ' . implode(', ', $this->assignments);
     }

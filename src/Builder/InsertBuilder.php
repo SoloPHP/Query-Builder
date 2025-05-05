@@ -23,16 +23,20 @@ class InsertBuilder extends AbstractBuilder implements
     use InsertGetIdTrait;
 
     public function __construct(
-        private readonly string $table,
+        string $table,
         CompilerInterface $compiler,
         ?ExecutorInterface $executor = null,
         ?CacheManager $cacheManager = null
     ) {
-        parent::__construct($compiler, $executor, $cacheManager);
+        parent::__construct($compiler, $executor, $cacheManager, $table);
     }
 
     public function build(): array
     {
+        if (empty($this->table)) {
+            throw new \InvalidArgumentException('Table name is not specified.');
+        }
+
         $sql = $this->compiler->compileInsert(
             $this->table,
             $this->columns,

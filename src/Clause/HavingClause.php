@@ -18,7 +18,7 @@ final readonly class HavingClause implements ClauseInterface
         }
     }
 
-    public function toSql(): string
+    public function compileClause(): string
     {
         $sql = $this->cb->toSql();
         return $sql !== '' ? 'HAVING ' . $sql : '';

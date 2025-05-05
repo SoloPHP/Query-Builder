@@ -11,7 +11,7 @@ final readonly class LimitClause implements ClauseInterface
     {
     }
 
-    public function toSql(): string
+    public function compileClause(): string
     {
         return $this->offset === null
             ? "LIMIT {$this->limit}"

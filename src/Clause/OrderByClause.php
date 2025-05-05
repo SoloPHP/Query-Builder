@@ -14,7 +14,7 @@ final readonly class OrderByClause implements ClauseInterface
     ) {
     }
 
-    public function toSql(): string
+    public function compileClause(): string
     {
         if (empty($this->orderings)) {
             return '';

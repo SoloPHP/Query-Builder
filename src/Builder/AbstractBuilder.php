@@ -17,12 +17,17 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
     use WhenTrait;
 
     protected array $clauses = [];
+    protected string $table = '';
 
     public function __construct(
-        protected readonly CompilerInterface  $compiler,
+        protected readonly CompilerInterface $compiler,
         protected ?ExecutorInterface $executor = null,
-        protected ?CacheManager      $cacheManager = null
+        protected ?CacheManager $cacheManager = null,
+        ?string $table = null
     ) {
+        if ($table !== null) {
+            $this->table = $table;
+        }
     }
 
     protected function getGrammar(): GrammarInterface
@@ -39,15 +44,34 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return $this;
     }
 
-    public function toSql(): string
+    protected function compileClauses(): string
     {
         usort($this->clauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
 
         $pieces = array_map(
-            fn($item): string => $item['clause']->toSql(),
+            fn($item): string => $item['clause']->compileClause(),
             $this->clauses
         );
         return trim(implode(' ', $pieces));
+    }
+
+    protected function getClausesSql(): array
+    {
+        usort($this->clauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
+        return array_map(fn($item) => $item['clause']->compileClause(), $this->clauses);
+    }
+
+    protected function getFilteredClausesSql(callable $filter): array
+    {
+        $filteredClauses = array_filter($this->clauses, $filter);
+        usort($filteredClauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
+        return array_map(fn($item) => $item['clause']->compileClause(), $filteredClauses);
+    }
+
+    public function toSql(): string
+    {
+        [$sql, $bindings] = $this->build();
+        return $sql;
     }
 
     public function getBindings(): array

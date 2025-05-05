@@ -43,7 +43,6 @@ final class ConditionBuilder
             $sql = '(' . $nested->toSql() . ')';
             $bindings = $nested->bindings();
         } else {
-            // Only process identifiers if grammar is available
             $sql = $this->grammar ? $this->processIdentifiers($expr) : $expr;
         }
 
@@ -57,12 +56,10 @@ final class ConditionBuilder
             return $expr;
         }
 
-        // Skip processing for raw expressions in curly braces
         if (str_starts_with($expr, '{') && str_ends_with($expr, '}')) {
             return substr($expr, 1, -1);
         }
 
-        // Process table.column identifiers
         if (preg_match_all('/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)/', $expr, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 $fullMatch = $match[0];

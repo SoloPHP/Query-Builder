@@ -13,7 +13,7 @@ final readonly class ValuesClause implements ClauseInterface
     ) {
     }
 
-    public function toSql(): string
+    public function compileClause(): string
     {
         $cols = '(' . implode(', ', $this->columns) . ')';
         $placeholders = array_fill(0, count($this->columns), '?');

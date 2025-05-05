@@ -24,19 +24,21 @@ class UpdateBuilder extends AbstractBuilder implements
     use ExecutableTrait;
 
     public function __construct(
-        private readonly string $table,
+        string $table,
         CompilerInterface $compiler,
         ?ExecutorInterface $executor = null,
         ?CacheManager $cacheManager = null
     ) {
-        parent::__construct($compiler, $executor, $cacheManager);
+        parent::__construct($compiler, $executor, $cacheManager, $table);
     }
 
     public function build(): array
     {
-        usort($this->clauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
+        if (empty($this->table)) {
+            throw new \InvalidArgumentException('Table name is not specified.');
+        }
 
-        $clausesSql = array_map(fn($item) => $item['clause']->toSql(), $this->clauses);
+        $clausesSql = $this->getClausesSql();
         $sql = $this->compiler->compileUpdate($this->table, $clausesSql);
 
         return [$sql, $this->getBindings()];

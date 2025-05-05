@@ -54,8 +54,13 @@ class SelectBuilder extends AbstractBuilder implements
         ?ExecutorInterface $executor = null,
         ?CacheManager $cacheManager = null
     ) {
-        parent::__construct($compiler, $executor, $cacheManager);
+        parent::__construct($compiler, $executor, $cacheManager, $table);
+    }
+
+    public function from(string $table): static
+    {
         $this->table = $table;
+        return $this;
     }
 
     public function build(): array
@@ -64,9 +69,7 @@ class SelectBuilder extends AbstractBuilder implements
             throw new \InvalidArgumentException('Table name is not specified. Use "from" method to set the table.');
         }
 
-        usort($this->clauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
-
-        $clausesSql = array_map(fn($item) => $item['clause']->toSql(), $this->clauses);
+        $clausesSql = $this->getClausesSql();
         $sql = $this->compiler->compileSelect($this->table, $this->columns, $clausesSql, $this->distinct);
         return [$sql, $this->getBindings()];
     }
@@ -77,21 +80,18 @@ class SelectBuilder extends AbstractBuilder implements
             throw new \InvalidArgumentException('Table name is not specified. Use "from" method to set the table.');
         }
 
-        $countClauses = array_filter($this->clauses, function ($item) {
+        $countExpression = '{';
+        $countExpression .= $distinct ? 'COUNT(DISTINCT ' : 'COUNT(';
+        $countExpression .= $column ? $this->getGrammar()->wrapIdentifier($column) : '*';
+        $countExpression .= ') as total_count}';
+
+        $clausesSql = $this->getFilteredClausesSql(function ($item) {
             return !(
                 $item['clause'] instanceof OrderByClause ||
                 $item['clause'] instanceof LimitClause
             );
         });
 
-        $countExpression = '{';
-        $countExpression .= $distinct ? 'COUNT(DISTINCT ' : 'COUNT(';
-        $countExpression .= $column ? $this->getGrammar()->wrapIdentifier($column) : '*';
-        $countExpression .= ') as total_count}';
-
-        usort($countClauses, fn($a, $b) => $a['priority'] <=> $b['priority']);
-
-        $clausesSql = array_map(fn($item) => $item['clause']->toSql(), $countClauses);
         $sql = $this->compiler->compileSelect($this->table, [$countExpression], $clausesSql, false);
         return [$sql, $this->getBindings()];
     }

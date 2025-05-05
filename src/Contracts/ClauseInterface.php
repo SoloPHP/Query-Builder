@@ -5,7 +5,7 @@ namespace Solo\QueryBuilder\Contracts;
 
 interface ClauseInterface
 {
-    public function toSql(): string;
+    public function compileClause(): string;
 
     public function bindings(): array;
 }

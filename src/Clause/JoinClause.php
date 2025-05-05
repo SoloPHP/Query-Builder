@@ -19,7 +19,7 @@ final readonly class JoinClause implements ClauseInterface
     {
     }
 
-    public function toSql(): string
+    public function compileClause(): string
     {
         $tableString = $this->grammar->wrapTable($this->table);
         $onCondition = $this->on;
