@@ -17,11 +17,8 @@ class DeleteBuilder extends AbstractBuilder implements
     use JoinTrait;
     use ExecutableTrait;
 
-    protected function doBuild(): array
+    protected function getBuilderType(): string
     {
-        $clausesSql = $this->getClausesSql();
-        $sql = $this->compiler->compileDelete($this->table, $clausesSql);
-
-        return [$sql, $this->getBindings()];
+        return 'Delete';
     }
 }

@@ -19,6 +19,11 @@ class InsertBuilder extends AbstractBuilder implements
     use ValuesTrait;
     use InsertGetIdTrait;
 
+    protected function getBuilderType(): string
+    {
+        return 'Insert';
+    }
+
     protected function doBuild(): array
     {
         $sql = $this->compiler->compileInsert(
@@ -27,6 +32,6 @@ class InsertBuilder extends AbstractBuilder implements
             $this->rows
         );
 
-        return [$sql, $this->getAllBindings()];
+        return [$sql, $this->getBindings()];
     }
 }

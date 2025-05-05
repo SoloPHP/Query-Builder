@@ -51,11 +51,9 @@ class SelectBuilder extends AbstractBuilder implements
         return $this;
     }
 
-    protected function doBuild(): array
+    protected function getBuilderType(): string
     {
-        $clausesSql = $this->getClausesSql();
-        $sql = $this->compiler->compileSelect($this->table, $this->columns, $clausesSql, $this->distinct);
-        return [$sql, $this->getBindings()];
+        return 'Select';
     }
 
     public function buildCount(?string $column = null, bool $distinct = false): array

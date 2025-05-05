@@ -11,8 +11,6 @@ use Solo\QueryBuilder\Contracts\ExecutorInterface;
 use Solo\QueryBuilder\Cache\CacheManager;
 use Solo\QueryBuilder\Capability\WhenTrait;
 use Solo\QueryBuilder\Contracts\Capability\WhenCapable;
-use Solo\QueryBuilder\Clause\OrderByClause;
-use Solo\QueryBuilder\Clause\LimitClause;
 
 abstract class AbstractBuilder implements BuilderInterface, WhenCapable
 {
@@ -20,6 +18,7 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
 
     protected array $clauses = [];
     protected string $table = '';
+    protected array $bindings = [];
 
     public function __construct(
         string $table = '',
@@ -43,7 +42,27 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return $this->doBuild();
     }
 
-    abstract protected function doBuild(): array;
+    protected function doBuild(): array
+    {
+        $clausesSql = $this->getClausesSql();
+        $method = 'compile' . $this->getBuilderType();
+
+        $bindings = $this->getBindings();
+
+        if ($this->getBuilderType() === 'Select') {
+            $columns = $this->columns ?? ['*'];
+            $distinct = $this->distinct ?? false;
+            $sql = $this->compiler->$method($this->table, $columns, $clausesSql, $distinct);
+        } elseif ($this->getBuilderType() === 'Insert') {
+            $sql = $this->compiler->$method($this->table, [], []);
+        } else {
+            $sql = $this->compiler->$method($this->table, $clausesSql);
+        }
+
+        return [$sql, $bindings];
+    }
+
+    abstract protected function getBuilderType(): string;
 
     protected function getGrammar(): GrammarInterface
     {
@@ -56,6 +75,12 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
             'clause' => $clause,
             'priority' => $priority
         ];
+        return $this;
+    }
+
+    protected function addBindings(array $bindings): static
+    {
+        $this->bindings = array_merge($this->bindings, $bindings);
         return $this;
     }
 
@@ -86,6 +111,19 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
         return array_map(fn($item) => $item['clause']->compileClause(), $filteredClauses);
     }
 
+    protected function isRawExpression(string $value): bool
+    {
+        return str_starts_with($value, '{') && str_ends_with($value, '}');
+    }
+
+    protected function getRawContent(string $value): string
+    {
+        if ($this->isRawExpression($value)) {
+            return substr($value, 1, -1);
+        }
+        return $value;
+    }
+
     public function toSql(): string
     {
         [$sql, $bindings] = $this->build();
@@ -94,7 +132,7 @@ abstract class AbstractBuilder implements BuilderInterface, WhenCapable
 
     public function getBindings(): array
     {
-        $all = [];
+        $all = $this->bindings;
         foreach ($this->clauses as $item) {
             $all = array_merge($all, $item['clause']->bindings());
         }

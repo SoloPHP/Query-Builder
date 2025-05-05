@@ -7,9 +7,8 @@ use Solo\QueryBuilder\Exception\QueryBuilderException;
 
 trait ValuesTrait
 {
-    private array $columns = [];
-    private array $rows = [];
-    private array $valueBindings = [];
+    protected array $columns = [];
+    protected array $rows = [];
 
     public function values(array $data): static
     {
@@ -38,14 +37,6 @@ trait ValuesTrait
         }
 
         $this->rows[] = $row;
-        $this->valueBindings = array_merge(
-            $this->valueBindings,
-            array_values($row)
-        );
-    }
-
-    protected function getAllBindings(): array
-    {
-        return array_merge($this->getBindings(), $this->valueBindings);
+        $this->addBindings(array_values($row));
     }
 }

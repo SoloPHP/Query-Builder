@@ -29,8 +29,8 @@ trait SetTrait
         $bindings = [];
 
         foreach ($this->data as $col => $val) {
-            if (is_string($val) && str_starts_with($val, '{') && str_ends_with($val, '}')) {
-                $rawValue = substr($val, 1, strlen($val) - 2);
+            if (is_string($val) && $this->isRawExpression($val)) {
+                $rawValue = $this->getRawContent($val);
                 $assignments[] = $this->getGrammar()->wrapIdentifier($col) . " = " . $rawValue;
             } else {
                 $assignments[] = $this->getGrammar()->wrapIdentifier($col) . " = ?";

@@ -20,11 +20,8 @@ class UpdateBuilder extends AbstractBuilder implements
     use SetTrait;
     use ExecutableTrait;
 
-    protected function doBuild(): array
+    protected function getBuilderType(): string
     {
-        $clausesSql = $this->getClausesSql();
-        $sql = $this->compiler->compileUpdate($this->table, $clausesSql);
-
-        return [$sql, $this->getBindings()];
+        return 'Update';
     }
 }
