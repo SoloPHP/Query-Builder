@@ -2,7 +2,7 @@
 
 A lightweight and flexible SQL query builder for PHP 8.2+ with support for multiple SQL dialects.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/solophp/query-builder)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/solophp/query-builder)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
