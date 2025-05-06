@@ -14,6 +14,7 @@ A lightweight and flexible SQL query builder for PHP 8.2+ with support for multi
 - 🔄 Support for different DBMS (MySQL, PostgreSQL, SQLite) with extensibility
 - ⚡️ Optional PSR-16 caching of SELECT query results (local and global control)
 - 🧩 Advanced features: subqueries, raw SQL expressions, conditional queries, DISTINCT selection
+- 🔄 Array handling in WHERE conditions with whereIn, orWhereIn, havingIn, and orHavingIn methods
 
 ## Installation
 
@@ -86,7 +87,6 @@ $users = $query->from('users')->getAllAssoc();
 // Disable global cache entirely
 Query::disableCache();
 ```
-
 
 ## Manual Initialization
 
@@ -161,24 +161,6 @@ $query->setDatabaseType('postgresql'); // or 'postgres', 'pgsql'
 $query->setDatabaseType('sqlite');
 ```
 
-### Specifying DBMS for a Query
-
-```php
-// Query with MySQL grammar
-$query->setDatabaseType('mysql');
-$mysqlResults = $query->from('users')
-    ->select('id', 'name')
-    ->where('status = ?', 'active')
-    ->getAllAssoc();
-
-// Query with PostgreSQL grammar
-$query->setDatabaseType('postgresql');
-$postgresResults = $query->from('users')
-    ->select('id', 'name')
-    ->where('status = ?', 'active')
-    ->getAllAssoc();
-```
-
 ## SELECT Queries
 
 ### Basic Selection Operations
@@ -207,6 +189,17 @@ $activeUsers = $query->from('users')
 $recentActiveUsers = $query->from('users')
     ->where('status = ?', 'active')
     ->where('created_at > ?', '2023-01-01')
+    ->getAllAssoc();
+
+// WHERE IN condition
+$specificUsers = $query->from('users')
+    ->whereIn('id', [1, 2, 3])
+    ->getAllAssoc();
+
+// OR WHERE IN condition
+$usersWithRoles = $query->from('users')
+    ->where('status = ?', 'active')
+    ->orWhereIn('role', ['admin', 'editor'])
     ->getAllAssoc();
 
 // Sorting
@@ -253,6 +246,28 @@ $userNames = $query->from('users')
     ->getColumn('name', 'id');
 // Result: [1 => 'John', 2 => 'Jane', 3 => 'Bob']
 
+// Basic HAVING
+$orderStats = $query->from('orders')
+    ->select('user_id', '{COUNT(*) as order_count}')
+    ->groupBy('user_id')
+    ->having('order_count > ?', 5)
+    ->getAllAssoc();
+
+// HAVING IN
+$orderStats = $query->from('orders')
+    ->select('user_id', '{COUNT(*) as order_count}')
+    ->groupBy('user_id')
+    ->havingIn('user_id', [1, 2, 3])
+    ->getAllAssoc();
+
+// Combined HAVING conditions
+$orderStats = $query->from('orders')
+    ->select('user_id', '{COUNT(*) as order_count}')
+    ->groupBy('user_id')
+    ->having('order_count > ?', 10)
+    ->orHavingIn('user_id', [5, 6, 7])
+    ->getAllAssoc();
+
 // Get prices from products
 $prices = $query->from('products')
     ->select('id', 'name', 'price')
@@ -271,12 +286,6 @@ $activeUserCount = $query->from('users')
 // Count specific fields or unique values
 $emailCount = $query->from('users')->count('email'); // Count of non-NULL emails
 $uniqueCities = $query->from('users')->count('city', true); // Count of unique cities
-
-// Count distinct with DISTINCT keyword for better readability
-$uniqueDepartments = $query->from('users')
-    ->select('department')
-    ->distinct()
-    ->count();
 ```
 
 ### Raw SQL Expressions
@@ -300,26 +309,6 @@ $userStats = $query->from('orders')
 $ordersByMonth = $query->from('orders')
     ->select('id', '{DATE_FORMAT(created_at, "%Y-%m") as month}', 'status')
     ->where('created_at >= ?', '2023-01-01')
-    ->getAllAssoc();
-
-// Complex expressions
-$categorizedProducts = $query->from('products')
-    ->select(
-        'id', 
-        'name',
-        '{CASE WHEN price > 100 THEN "Premium" WHEN price > 50 THEN "Standard" ELSE "Basic" END as category}'
-    )
-    ->getAllAssoc();
-
-// Use DISTINCT with raw expressions
-$uniqueCategories = $query->from('products')
-    ->select('{DISTINCT category}')
-    ->getAllAssoc();
-
-// Alternative with distinct() method
-$uniqueCategories = $query->from('products')
-    ->select('category')
-    ->distinct()
     ->getAllAssoc();
 ```
 
@@ -357,29 +346,7 @@ $products = $query->from('products')
     ->getAllAssoc();
 ```
 
-### Complex Conditions
-
-```php
-// Nested conditions
-$users = $query->from('users')
-    ->where(function($condition) {
-        $condition->where('status = ?', 'active')
-                 ->orWhere('role = ?', 'admin');
-    })
-    ->getAllAssoc();
-
-// IN conditions
-$specificUsers = $query->from('users')
-    ->where('id IN (?, ?, ?)', 1, 2, 3)
-    ->getAllAssoc();
-
-// BETWEEN conditions
-$usersInRange = $query->from('users')
-    ->where('created_at BETWEEN ? AND ?', '2023-01-01', '2023-12-31')
-    ->getAllAssoc();
-```
-
-### JOIN Operations
+## JOIN Operations
 
 ```php
 // INNER JOIN
@@ -388,12 +355,6 @@ $ordersWithUsers = $query->from('orders')
     ->join('users', 'orders.user_id = users.id')
     ->getAllAssoc();
     
-// JOIN with additional condition
-$activeOrdersWithUsers = $query->from('orders')
-    ->select('orders.id', 'orders.amount', 'users.name')
-    ->join('users', 'orders.user_id = users.id AND users.status = ?', 'active')
-    ->getAllAssoc();
-
 // LEFT JOIN
 $usersWithProfiles = $query->from('users')
     ->select('users.id', 'users.name', 'profiles.bio')
@@ -497,70 +458,21 @@ $exists = $query->from('users')
     ->exists();
 ```
 
-## Query Execution
-
-The library provides a flexible mechanism for executing queries using the PDO executor or your own custom executor:
-
-### Using QueryFactory Utility
-
-The simplest way to initialize is with the `QueryFactory` utility class:
+## Transaction Support
 
 ```php
-use Solo\QueryBuilder\Utility\QueryFactory;
-
-// Create a Query instance with one line
-$query = QueryFactory::createWithPdo(
-    'localhost',       // host
-    'db_user',         // username
-    'db_password',     // password
-    'database_name',   // database
-    PDO::FETCH_ASSOC,  // fetchMode
-    'mysql',           // optional database type
-    null,              // optional port
-    []                 // optional PDO options
-);
-
-// Execute query and get results
-$users = $query->from('users')
-    ->select('id', 'name')
-    ->where('status = ?', 'active')
-    ->getAllAssoc();
-```
-
-### Manual Configuration
-
-For more control over the configuration:
-
-```php
-use Solo\QueryBuilder\Executors\PdoExecutor\PdoExecutor;
-use Solo\QueryBuilder\Executors\PdoExecutor\Connection;
-use Solo\QueryBuilder\Executors\PdoExecutor\Config;
-use Solo\QueryBuilder\Factory\BuilderFactory;
-use Solo\QueryBuilder\Factory\GrammarFactory;
-use Solo\QueryBuilder\Facade\Query;
-
-// Configure PDO connection
-$config = new Config(
-    'localhost',        // host
-    'db_user',          // username
-    'db_password',      // password
-    'database_name',    // database
-    PDO::FETCH_ASSOC,   // fetchMode
-    'mysql',            // driver
-    3306,               // port (optional)
-    []                  // options (optional)
-);
-
-// Create connection and executor
-$connection = new Connection($config);
-$executor = new PdoExecutor($connection);
-
-// Create factories
-$grammarFactory = new GrammarFactory();
-$builderFactory = new BuilderFactory($grammarFactory, $executor, 'mysql');
-
-// Create query builder
-$query = new Query($builderFactory);
+try {
+    $query->beginTransaction();
+    
+    // Perform multiple operations
+    $query->insert('users')->values(['name' => 'John'])->execute();
+    $query->update('stats')->set('user_count', '{user_count + 1}')->execute();
+    
+    $query->commit();
+} catch (\Exception $e) {
+    $query->rollBack();
+    throw $e;
+}
 ```
 
 ## API Reference
@@ -584,7 +496,21 @@ $query = new Query($builderFactory);
 | `where(string\|\Closure $expr, mixed ...$bindings)` | Adds a WHERE condition |
 | `orWhere(string\|\Closure $expr, mixed ...$bindings)` | Adds an OR WHERE condition |
 | `andWhere(string\|\Closure $expr, mixed ...$bindings)` | Adds an AND WHERE condition |
+| `whereIn(string $column, array $values)` | Adds a WHERE IN condition |
+| `orWhereIn(string $column, array $values)` | Adds an OR WHERE IN condition |
+| `andWhereIn(string $column, array $values)` | Adds an AND WHERE IN condition |
 | `when(bool $condition, callable $callback, ?callable $default = null)` | Conditionally adds clauses |
+
+### Having Conditions
+
+| Method | Description |
+|--------|-------------|
+| `having(string\|\Closure $expr, mixed ...$bindings)` | Adds a HAVING condition |
+| `orHaving(string\|\Closure $expr, mixed ...$bindings)` | Adds an OR HAVING condition |
+| `andHaving(string\|\Closure $expr, mixed ...$bindings)` | Adds an AND HAVING condition |
+| `havingIn(string $column, array $values)` | Adds a HAVING IN condition |
+| `orHavingIn(string $column, array $values)` | Adds an OR HAVING IN condition |
+| `andHavingIn(string $column, array $values)` | Adds an AND HAVING IN condition |
 
 ### Joins
 
@@ -643,29 +569,14 @@ $query = new Query($builderFactory);
 | `count(?string $column = null, bool $distinct = false)` | Counts records that match the query |
 | `build()` | Returns the SQL and bindings without executing |
 
-## Extending Functionality
+### Transaction Methods
 
-### Adding Support for a New DBMS
-
-To add support for a new DBMS:
-
-1. Create a new grammar class inheriting from `AbstractGrammar`
-2. Add the new DBMS to `GrammarFactory`
-
-```php
-namespace Solo\QueryBuilder\Grammar;
-
-final class CustomGrammar extends AbstractGrammar
-{
-    protected string $tableQuote = '`';
-    protected string $columnQuote = '`';
-    
-    // No need to implement any methods as they are already in AbstractGrammar
-    // Just override the quote characters as needed
-}
-
-// Then update GrammarFactory to recognize your new dialect
-```
+| Method | Description |
+|--------|-------------|
+| `beginTransaction()` | Starts a new transaction |
+| `commit()` | Commits the current transaction |
+| `rollBack()` | Rolls back the current transaction |
+| `inTransaction()` | Checks if a transaction is active |
 
 ## Requirements
 

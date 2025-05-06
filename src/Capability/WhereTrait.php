@@ -23,4 +23,33 @@ trait WhereTrait
     {
         return $this->addCondition('Where', ClausePriority::WHERE, 'OR', $expr, $bindings);
     }
+
+    public function whereIn(string $column, array $values): static
+    {
+        if (empty($values)) {
+            return $this;
+        }
+
+        $placeholders = rtrim(str_repeat('?, ', count($values)), ', ');
+        $expr = "{$column} IN ({$placeholders})";
+
+        return $this->where($expr, ...$values);
+    }
+
+    public function andWhereIn(string $column, array $values): static
+    {
+        return $this->whereIn($column, $values);
+    }
+
+    public function orWhereIn(string $column, array $values): static
+    {
+        if (empty($values)) {
+            return $this;
+        }
+
+        $placeholders = rtrim(str_repeat('?, ', count($values)), ', ');
+        $expr = "{$column} IN ({$placeholders})";
+
+        return $this->orWhere($expr, ...$values);
+    }
 }

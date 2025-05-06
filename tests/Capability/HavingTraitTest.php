@@ -107,4 +107,54 @@ class HavingTraitTest extends TestCase
         $this->assertStringContainsString('HAVING (order_count > ? OR total_amount > ?)', $sql);
         $this->assertEquals([5, 1000], $bindings);
     }
+
+    /**
+     * Test havingIn method.
+     */
+    public function testHavingIn(): void
+    {
+        [$sql, $bindings] = $this->query
+            ->from('orders')
+            ->select('user_id', '{COUNT(*) as order_count}')
+            ->groupBy('user_id')
+            ->havingIn('user_id', [1, 2, 3])
+            ->build();
+
+        $this->assertStringContainsString('HAVING user_id IN (?, ?, ?)', $sql);
+        $this->assertEquals([1, 2, 3], $bindings);
+    }
+
+    /**
+     * Test andHavingIn method.
+     */
+    public function testAndHavingIn(): void
+    {
+        [$sql, $bindings] = $this->query
+            ->from('orders')
+            ->select('user_id', '{COUNT(*) as order_count}')
+            ->groupBy('user_id')
+            ->having('order_count > ?', 5)
+            ->andHavingIn('user_id', [1, 2, 3])
+            ->build();
+
+        $this->assertStringContainsString('HAVING order_count > ? AND user_id IN (?, ?, ?)', $sql);
+        $this->assertEquals([5, 1, 2, 3], $bindings);
+    }
+
+    /**
+     * Test orHavingIn method.
+     */
+    public function testOrHavingIn(): void
+    {
+        [$sql, $bindings] = $this->query
+            ->from('orders')
+            ->select('user_id', '{COUNT(*) as order_count}')
+            ->groupBy('user_id')
+            ->having('order_count > ?', 5)
+            ->orHavingIn('user_id', [1, 2, 3])
+            ->build();
+
+        $this->assertStringContainsString('HAVING order_count > ? OR user_id IN (?, ?, ?)', $sql);
+        $this->assertEquals([5, 1, 2, 3], $bindings);
+    }
 }

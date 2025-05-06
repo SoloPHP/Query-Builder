@@ -229,4 +229,78 @@ class WhereTraitTest extends TestCase
         $this->assertStringContainsString('WHERE deleted_at IS NULL', $sql);
         $this->assertEquals([], $bindings);
     }
+
+    /**
+     * Test basic whereIn functionality.
+     */
+    public function testBasicWhereIn(): void
+    {
+        [$sql, $bindings] = $this->query
+            ->from('users')
+            ->whereIn('id', [1, 2, 3])
+            ->build();
+
+        $this->assertStringContainsString('WHERE id IN (?, ?, ?)', $sql);
+        $this->assertEquals([1, 2, 3], $bindings);
+    }
+
+    /**
+     * Test whereIn with empty array.
+     */
+    public function testWhereInWithEmptyArray(): void
+    {
+        [$sql, $bindings] = $this->query
+            ->from('users')
+            ->whereIn('id', [])
+            ->build();
+
+        $this->assertStringNotContainsString('WHERE', $sql);
+        $this->assertEquals([], $bindings);
+    }
+
+    /**
+     * Test andWhereIn method.
+     */
+    public function testAndWhereIn(): void
+    {
+        [$sql, $bindings] = $this->query
+            ->from('users')
+            ->where('status = ?', 'active')
+            ->andWhereIn('role', ['admin', 'editor'])
+            ->build();
+
+        $this->assertStringContainsString('WHERE status = ? AND role IN (?, ?)', $sql);
+        $this->assertEquals(['active', 'admin', 'editor'], $bindings);
+    }
+
+    /**
+     * Test orWhereIn method.
+     */
+    public function testOrWhereIn(): void
+    {
+        [$sql, $bindings] = $this->query
+            ->from('users')
+            ->where('status = ?', 'active')
+            ->orWhereIn('role', ['admin', 'editor'])
+            ->build();
+
+        $this->assertStringContainsString('WHERE status = ? OR role IN (?, ?)', $sql);
+        $this->assertEquals(['active', 'admin', 'editor'], $bindings);
+    }
+
+    /**
+     * Test combining different where methods.
+     */
+    public function testCombiningWhereMethods(): void
+    {
+        [$sql, $bindings] = $this->query
+            ->from('users')
+            ->whereIn('role', ['admin', 'editor'])
+            ->where('active = ?', 1)
+            ->orWhereIn('department', ['IT', 'HR'])
+            ->build();
+
+        $this->assertStringContainsString('WHERE role IN (?, ?) AND active = ? OR department IN (?, ?)', $sql);
+        $this->assertEquals(['admin', 'editor', 1, 'IT', 'HR'], $bindings);
+    }
 }
