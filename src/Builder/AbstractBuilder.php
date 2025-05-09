@@ -22,7 +22,7 @@ abstract class AbstractBuilder implements BuilderInterface
     protected array $clauses = [];
 
     public function __construct(
-        string $table = '',
+        string $table,
         protected readonly CompilerInterface $compiler,
         protected ?ExecutorInterface $executor = null
     ) {
