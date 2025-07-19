@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Factory;
@@ -29,7 +30,7 @@ final class GrammarFactory implements GrammarFactoryInterface
 
         $databaseType = self::DATABASE_TYPES[$normalizedType];
 
-        return match($databaseType) {
+        return match ($databaseType) {
             'mysql' => new MySqlGrammar(),
             'postgresql' => new PostgresGrammar(),
             'sqlite' => new SQLiteGrammar(),

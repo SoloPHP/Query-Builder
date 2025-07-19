@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Executors\PdoExecutor;
@@ -38,7 +39,7 @@ final readonly class Config
 
         if ($driver === 'sqlite') {
             return sprintf(self::DSN[$driver], $this->db);
-    }
+        }
 
         return sprintf(self::DSN[$driver], $this->host, $port, $this->db);
     }

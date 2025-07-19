@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Builder;
@@ -27,7 +28,7 @@ abstract class AbstractBuilder implements BuilderInterface
         protected ?ExecutorInterface $executor = null
     ) {
             $this->table = $table;
-        }
+    }
 
     protected function validateTableName(): void
     {

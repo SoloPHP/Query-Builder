@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Clause;
@@ -13,7 +14,7 @@ final readonly class OrderByClause implements ClauseInterface
     public const TYPE = ClausePriority::ORDER_BY;
 
     public function __construct(
-        private array             $orderings,
+        private array $orderings,
         private ?GrammarInterface $grammar = null
     ) {
     }

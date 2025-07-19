@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Capability;
 
@@ -98,7 +100,7 @@ class HavingTraitTest extends TestCase
             ->from('orders')
             ->select('user_id', '{COUNT(*) as order_count}', '{SUM(amount) as total_amount}')
             ->groupBy('user_id')
-            ->having(function($condition) {
+            ->having(function ($condition) {
                 $condition->where('order_count > ?', 5)
                     ->orWhere('total_amount > ?', 1000);
             })
