@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Capability;
 
@@ -32,7 +34,7 @@ class WhenTraitTest extends TestCase
 
         [$sql, $bindings] = $this->query
             ->from('users')
-            ->when(true, function($query) use ($email) {
+            ->when(true, function ($query) use ($email) {
                 return $query->where('email = ?', $email);
             })
             ->build();
@@ -50,7 +52,7 @@ class WhenTraitTest extends TestCase
 
         [$sql, $bindings] = $this->query
             ->from('users')
-            ->when(false, function($query) use ($email) {
+            ->when(false, function ($query) use ($email) {
                 return $query->where('email = ?', $email);
             })
             ->build();
@@ -71,10 +73,10 @@ class WhenTraitTest extends TestCase
             ->from('users')
             ->when(
                 false,
-                function($query) use ($email) {
+                function ($query) use ($email) {
                     return $query->where('email = ?', $email);
                 },
-                function($query) use ($defaultEmail) {
+                function ($query) use ($defaultEmail) {
                     return $query->where('email = ?', $defaultEmail);
                 }
             )
@@ -91,7 +93,7 @@ class WhenTraitTest extends TestCase
     {
         [$sql, $bindings] = $this->query
             ->from('users')
-            ->when(true, function($query) {
+            ->when(true, function ($query) {
                 return $query->where('active = ?', 1);
             })
             ->orderBy('id', 'DESC')
@@ -114,9 +116,9 @@ class WhenTraitTest extends TestCase
 
         [$sql, $bindings] = $this->query
             ->from('users')
-            ->when(true, function($query) use ($status, $role) {
+            ->when(true, function ($query) use ($status, $role) {
                 return $query->where('status = ?', $status)
-                    ->when(true, function($query) use ($role) {
+                    ->when(true, function ($query) use ($role) {
                         return $query->where('role = ?', $role);
                     });
             })

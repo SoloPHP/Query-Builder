@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Capability;
@@ -72,7 +73,7 @@ trait ResultTrait
 
     public function exists(): bool
     {
-        return $this->fetchWithCache('exists', function() {
+        return $this->fetchWithCache('exists', function () {
             [$countSql, $countBindings] = $this->buildCount();
             $this->executor->query($countSql, $countBindings);
             return (int)$this->executor->fetchColumn() > 0;
@@ -83,7 +84,7 @@ trait ResultTrait
     {
         $cacheKey = 'count' . ($column !== null ? '_' . $column : '') . ($distinct ? '_distinct' : '');
 
-        return $this->fetchWithCache($cacheKey, function() use ($column, $distinct) {
+        return $this->fetchWithCache($cacheKey, function () use ($column, $distinct) {
             [$countSql, $countBindings] = $this->buildCount($column, $distinct);
             $this->executor->query($countSql, $countBindings);
             return (int)$this->executor->fetchColumn();

@@ -1,11 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Executors\PdoExecutor;
 
 use Solo\QueryBuilder\Contracts\ExecutorInterface;
 use Solo\QueryBuilder\Exception\QueryBuilderException;
-
 use PDO;
 use PDOStatement;
 use Throwable;
@@ -111,7 +111,7 @@ final class PdoExecutor implements ExecutorInterface
             return $this->defaultFetch;
         }
 
-        return match(strtolower($type)) {
+        return match (strtolower($type)) {
             'assoc' => PDO::FETCH_ASSOC,
             'object' => PDO::FETCH_CLASS,
             'numeric' => PDO::FETCH_NUM,

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Clause;
@@ -27,7 +28,7 @@ final readonly class GroupByClause implements ClauseInterface
         $wrappedColumns = $this->columns;
 
         if ($this->grammar) {
-            $wrappedColumns = array_map(function($column) {
+            $wrappedColumns = array_map(function ($column) {
                 return Raw::is($column)
                     ? Raw::get($column)
                     : $this->grammar->wrapIdentifier($column);

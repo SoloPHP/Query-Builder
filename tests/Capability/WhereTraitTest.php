@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Capability;
 
@@ -119,7 +121,7 @@ class WhereTraitTest extends TestCase
     {
         [$sql, $bindings] = $this->query
             ->from('users')
-            ->where(function($condition) {
+            ->where(function ($condition) {
                 $condition->where('status = ?', 'active')
                     ->orWhere('role = ?', 'admin');
             })
@@ -137,9 +139,9 @@ class WhereTraitTest extends TestCase
         [$sql, $bindings] = $this->query
             ->from('users')
             ->where('created_at > ?', '2023-01-01')
-            ->where(function($condition) {
+            ->where(function ($condition) {
                 $condition->where('status = ?', 'active')
-                    ->orWhere(function($c) {
+                    ->orWhere(function ($c) {
                         $c->where('role = ?', 'admin')
                             ->where('department = ?', 'IT');
                     });
