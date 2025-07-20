@@ -34,12 +34,12 @@ final readonly class Config
     public function dsn(): string
     {
         $driver = strtolower($this->driver);
-        $port = $this->port ?? self::DEFAULT_PORTS[$driver] ?? self::DEFAULT_PORTS['mysql'];
 
         if ($driver === 'sqlite') {
             return sprintf(self::DSN[$driver], $this->db);
-    }
+        }
 
+        $port = $this->port ?? self::DEFAULT_PORTS[$driver] ?? self::DEFAULT_PORTS['mysql'];
         return sprintf(self::DSN[$driver], $this->host, $port, $this->db);
     }
 
@@ -74,5 +74,20 @@ final readonly class Config
     public function fetchMode(): int
     {
         return $this->fetchMode;
+    }
+
+    public function getDriver(): string
+    {
+        return $this->driver;
+    }
+
+    public function getHost(): string
+    {
+        return $this->host;
+    }
+
+    public function getDatabase(): string
+    {
+        return $this->db;
     }
 }

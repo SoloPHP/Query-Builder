@@ -1,5 +1,4 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Facade;
 
@@ -7,6 +6,8 @@ use Psr\SimpleCache\CacheInterface;
 use Solo\QueryBuilder\Cache\CacheManager;
 use Solo\QueryBuilder\Contracts\BuilderFactoryInterface;
 use Solo\QueryBuilder\Contracts\ExecutorInterface;
+use Solo\QueryBuilder\Executors\PdoExecutor\PooledExecutor;
+use Solo\QueryBuilder\Pool\ConnectionPoolInterface;
 use Solo\QueryBuilder\Builder\{
     SelectBuilder,
     InsertBuilder,
@@ -103,5 +104,13 @@ final class Query
     public function getExecutor(): ExecutorInterface
     {
         return $this->executor;
+    }
+
+    public function getConnectionPool(): ?ConnectionPoolInterface
+    {
+        if ($this->executor instanceof PooledExecutor) {
+            return $this->executor->getConnectionPool();
+        }
+        return null;
     }
 }

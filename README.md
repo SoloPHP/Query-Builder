@@ -1,8 +1,8 @@
 # Solo PHP Query Builder
 
-A lightweight and flexible SQL query builder for PHP 8.2+ with support for multiple SQL dialects.
+A lightweight and flexible SQL query builder for PHP 8.2+ with support for multiple SQL dialects and connection pooling.
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/solophp/query-builder)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/solophp/query-builder)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -13,6 +13,7 @@ A lightweight and flexible SQL query builder for PHP 8.2+ with support for multi
 - 🧩 Intuitive fluent interface for building queries
 - 🔄 Support for different DBMS (MySQL, PostgreSQL, SQLite) with extensibility
 - ⚡️ Optional PSR-16 caching of SELECT query results (local and global control)
+- 🏊‍♂️ **Connection pooling support** for high-performance applications
 - 🧩 Advanced features: subqueries, raw SQL expressions, conditional queries, DISTINCT selection
 - 🔄 Array handling in WHERE conditions with whereIn, orWhereIn, havingIn, and orHavingIn methods
 
@@ -23,6 +24,8 @@ composer require solophp/query-builder
 ```
 
 ## Quick Start
+
+### Basic Usage
 
 ```php
 use Solo\QueryBuilder\Utility\QueryFactory;
@@ -64,6 +67,49 @@ $affectedRows = $query->delete('users')
     ->where('id = ?', 5)
     ->execute();
 ```
+
+### Connection Pooling
+
+For high-traffic applications, use connection pooling to improve performance and manage database connections efficiently:
+
+```php
+use Solo\QueryBuilder\Utility\PooledQueryFactory;
+
+// Create with connection pool
+$query = PooledQueryFactory::createWithPool(
+    host: 'localhost',
+    username: 'username',
+    password: 'password',
+    database: 'database',
+    maxConnections: 20,      // Maximum connections in pool
+    minConnections: 5,       // Minimum connections to maintain  
+    maxIdleTime: 3600,       // Max idle time before connection expires (seconds)
+    connectionTimeout: 30    // Timeout when waiting for connection (seconds)
+);
+
+// Use exactly the same API as regular query builder
+$users = $query->from('users')
+    ->where('status = ?', 'active')
+    ->getAllAssoc();
+
+// Monitor pool status
+$pool = $query->getConnectionPool();
+if ($pool) {
+    echo "Active connections: " . $pool->getActiveConnections() . "\n";
+    echo "Idle connections: " . $pool->getIdleConnections() . "\n";
+    echo "Total connections: " . $pool->getTotalConnections() . "\n";
+}
+```
+
+#### When to Use Connection Pooling
+
+Connection pooling is beneficial for:
+- High-traffic web applications
+- Applications with many concurrent database operations
+- Long-running processes that perform frequent database queries
+- Microservices that need to minimize connection overhead
+
+For simple applications with low traffic, the standard single connection approach is sufficient.
 
 ## Caching (PSR-16)
 
@@ -122,6 +168,36 @@ $executor = new PdoExecutor($connection);
 $builderFactory = new BuilderFactory($grammarFactory, $executor, 'mysql');
 
 // Creating a Query instance
+$query = new Query($builderFactory);
+```
+
+### Manual Initialization with Connection Pool
+
+```php
+use Solo\QueryBuilder\Facade\Query;
+use Solo\QueryBuilder\Executors\PdoExecutor\{PooledExecutor, Config};
+use Solo\QueryBuilder\Pool\ConnectionPool;
+use Solo\QueryBuilder\Factory\{BuilderFactory, GrammarFactory};
+
+$grammarFactory = new GrammarFactory();
+
+// Create configuration
+$config = new Config('localhost', 'username', 'password', 'database');
+
+// Create connection pool
+$pool = new ConnectionPool(
+    config: $config,
+    maxConnections: 15,
+    minConnections: 3,
+    maxIdleTime: 1800,
+    connectionTimeout: 20
+);
+
+// Create pooled executor
+$executor = new PooledExecutor($pool);
+
+// Create query builder
+$builderFactory = new BuilderFactory($grammarFactory, $executor, 'mysql');
 $query = new Query($builderFactory);
 ```
 
@@ -475,6 +551,55 @@ try {
 }
 ```
 
+## Connection Pool Configuration
+
+### Pool Parameters
+
+When creating a pooled connection, you can configure various parameters:
+
+```php
+$query = PooledQueryFactory::createWithPool(
+    host: 'localhost',
+    username: 'user',
+    password: 'password',
+    database: 'mydb',
+    
+    // Pool Configuration
+    maxConnections: 20,      // Maximum connections allowed in pool
+    minConnections: 5,       // Minimum connections to maintain
+    maxIdleTime: 3600,       // Seconds before idle connection expires
+    connectionTimeout: 30,   // Seconds to wait for available connection
+    
+    // Standard PDO options
+    fetchMode: PDO::FETCH_ASSOC,
+    dbType: 'mysql',
+    port: 3306,
+    options: []
+);
+```
+
+### Pool Monitoring
+
+Monitor your connection pool status for performance optimization:
+
+```php
+$pool = $query->getConnectionPool();
+
+if ($pool) {
+    echo "Pool Statistics:\n";
+    echo "- Active connections: " . $pool->getActiveConnections() . "\n";
+    echo "- Idle connections: " . $pool->getIdleConnections() . "\n";
+    echo "- Total connections: " . $pool->getTotalConnections() . "\n";
+}
+```
+
+### Best Practices for Connection Pooling
+
+1. **Set appropriate pool size**: Start with `maxConnections = 2 * CPU_CORES` and adjust based on your application's needs
+2. **Monitor pool usage**: Regular monitoring helps identify optimal pool size
+3. **Configure idle timeout**: Set `maxIdleTime` based on your application's usage patterns
+4. **Handle connection timeouts**: Always handle `QueryBuilderException` when connection pool is exhausted
+
 ## API Reference
 
 ### Query Methods
@@ -488,6 +613,7 @@ try {
 | `update(string $table)` | Starts an update query |
 | `delete(string $table)` | Starts a delete query |
 | `setDatabaseType(string $type)` | Sets the database type (mysql, postgresql, sqlite) |
+| `getConnectionPool()` | Returns the connection pool instance (if using pooled connections) |
 
 ### Where Conditions
 
@@ -577,6 +703,15 @@ try {
 | `commit()` | Commits the current transaction |
 | `rollBack()` | Rolls back the current transaction |
 | `inTransaction()` | Checks if a transaction is active |
+
+### Connection Pool Methods
+
+| Method | Description |
+|--------|-------------|
+| `getActiveConnections()` | Returns the number of connections currently in use |
+| `getIdleConnections()` | Returns the number of idle connections available |
+| `getTotalConnections()` | Returns the total number of connections in the pool |
+| `closeAll()` | Closes all connections in the pool |
 
 ## Requirements
 
