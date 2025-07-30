@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Builder;
 
@@ -14,7 +16,7 @@ class InsertBuilderTest extends TestCase
         $compiler->method('compileInsert')->willReturn('SQL_INSERT');
         $builder = new InsertBuilder('users', $compiler);
 
-        $builder->values(['name'=>'John','age'=>30]);
+        $builder->values(['name' => 'John','age' => 30]);
         [$sql, $bindings] = $builder->build();
 
         $this->assertSame('SQL_INSERT', $sql);
@@ -28,8 +30,8 @@ class InsertBuilderTest extends TestCase
         $builder = new InsertBuilder('users', $compiler);
 
         $builder->values([
-            ['name'=>'John','age'=>30],
-            ['name'=>'Jane','age'=>25]
+            ['name' => 'John','age' => 30],
+            ['name' => 'Jane','age' => 25]
         ]);
         [$sql, $bindings] = $builder->build();
 

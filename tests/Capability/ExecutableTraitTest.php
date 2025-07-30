@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Capability;
 
@@ -32,7 +34,7 @@ class ExecutableTraitTest extends TestCase
         $this->mockExecutor->expects($this->once())
             ->method('query')
             ->with(
-                $this->callback(function($sql) {
+                $this->callback(function ($sql) {
                     $this->assertStringContainsString('UPDATE `users` SET `status` = ?', $sql);
                     return true;
                 }),
@@ -61,7 +63,7 @@ class ExecutableTraitTest extends TestCase
         $this->mockExecutor->expects($this->once())
             ->method('query')
             ->with(
-                $this->callback(function($sql) {
+                $this->callback(function ($sql) {
                     return strpos($sql, 'DELETE FROM `users`') !== false;
                 }),
                 $this->equalTo([1])
@@ -88,7 +90,7 @@ class ExecutableTraitTest extends TestCase
         $this->mockExecutor->expects($this->once())
             ->method('query')
             ->with(
-                $this->callback(function($sql) {
+                $this->callback(function ($sql) {
                     return strpos($sql, 'INSERT INTO `users`') !== false;
                 }),
                 $this->equalTo(['John Doe', 'john@example.com'])
@@ -118,7 +120,7 @@ class ExecutableTraitTest extends TestCase
         $this->mockExecutor->expects($this->once())
             ->method('query')
             ->with(
-                $this->callback(function($sql) {
+                $this->callback(function ($sql) {
                     $this->assertStringContainsString('UPDATE `users` SET `status` = ?', $sql);
                     return true;
                 }),

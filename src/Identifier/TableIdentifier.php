@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Identifier;
@@ -20,12 +21,13 @@ final readonly class TableIdentifier
             // First try to match 'table AS alias' pattern
             if (preg_match('/\s+AS\s+/i', $table)) {
                 $parts = preg_split('/\s+AS\s+/i', $table, 2);
-            if (count($parts) === 2) {
-                $this->table = trim($parts[0]);
-                $this->alias = trim($parts[1]);
-                return;
+                if (count($parts) === 2) {
+                    $this->table = trim($parts[0]);
+                    $this->alias = trim($parts[1]);
+                    return;
+                }
             }
-        }
+
             // Then try to match 'table alias' pattern (without AS keyword)
             elseif (preg_match('/^([^\s]+)\s+([^\s]+)$/', trim($table), $matches)) {
                 $this->table = $matches[1];

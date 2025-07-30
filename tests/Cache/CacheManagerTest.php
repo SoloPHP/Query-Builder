@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Cache;
 
@@ -38,17 +40,17 @@ class CacheManagerTest extends TestCase
 
             public function getMultiple(iterable $keys, mixed $default = null): iterable
             {
-                throw new \BadMethodCallException;
+                throw new \BadMethodCallException();
             }
 
             public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool
             {
-                throw new \BadMethodCallException;
+                throw new \BadMethodCallException();
             }
 
             public function deleteMultiple(iterable $keys): bool
             {
-                throw new \BadMethodCallException;
+                throw new \BadMethodCallException();
             }
 
             public function has(string $key): bool
@@ -98,17 +100,17 @@ class CacheManagerTest extends TestCase
 
             public function getMultiple(iterable $keys, mixed $default = null): iterable
             {
-                throw new \BadMethodCallException;
+                throw new \BadMethodCallException();
             }
 
             public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool
             {
-                throw new \BadMethodCallException;
+                throw new \BadMethodCallException();
             }
 
             public function deleteMultiple(iterable $keys): bool
             {
-                throw new \BadMethodCallException;
+                throw new \BadMethodCallException();
             }
 
             public function has(string $key): bool
@@ -120,7 +122,7 @@ class CacheManagerTest extends TestCase
         $manager = new CacheManager($cache, 60);
 
         $key   = 'foo';
-        $value = ['a'=>1];
+        $value = ['a' => 1];
 
         $this->assertFalse($manager->has($key));
         $manager->set($key, $value);

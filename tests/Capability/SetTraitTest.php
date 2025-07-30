@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Capability;
 
@@ -125,7 +127,10 @@ class SetTraitTest extends TestCase
             ->set('login_count', '{login_count + 1}')
             ->where('id = ?', 1)
             ->build();
-        $this->assertStringContainsString('UPDATE `users` SET `name` = ?, `updated_at` = NOW(), `login_count` = login_count + 1', $sql);
+        $this->assertStringContainsString(
+            'UPDATE `users` SET `name` = ?, `updated_at` = NOW(), `login_count` = login_count + 1',
+            $sql
+        );
         // Check that only the value for name and the where condition are in bindings
         $this->assertEquals(['John Doe', 1], $bindings);
     }
@@ -144,7 +149,10 @@ class SetTraitTest extends TestCase
             ])
             ->where('id = ?', 1)
             ->build();
-        $this->assertStringContainsString('UPDATE `users` SET `name` = ?, `updated_at` = NOW(), `login_count` = login_count + 1', $sql);
+        $this->assertStringContainsString(
+            'UPDATE `users` SET `name` = ?, `updated_at` = NOW(), `login_count` = login_count + 1',
+            $sql
+        );
         // Check that only the value for name and the where condition are in bindings
         $this->assertEquals(['John Doe', 1], $bindings);
     }
@@ -165,7 +173,11 @@ class SetTraitTest extends TestCase
             ->set('status', '{IF(stock > 0, "available", "out_of_stock")}')
             ->where('id = ?', 5)
             ->build();
-        $this->assertStringContainsString('UPDATE `products` SET `name` = ?, `price` = ?, `stock` = stock - 1, `last_update` = ?, `status` = IF(stock > 0, "available", "out_of_stock")', $sql);
+        $this->assertStringContainsString(
+            'UPDATE `products` SET `name` = ?, `price` = ?, `stock` = stock - 1, `last_update` = ?, ' .
+            '`status` = IF(stock > 0, "available", "out_of_stock")',
+            $sql
+        );
         // Only regular values should be in bindings
         $this->assertEquals(['New Product', 19.99, $timestamp, 5], $bindings);
     }

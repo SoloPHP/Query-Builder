@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<ruleset name="Query Builder Coding Standards">
+    <description>PSR-12 coding standards for Query Builder project</description>
+
+    <!-- Include PSR-12 standard -->
+    <rule ref="PSR12"/>
+
+    <!-- Exclude some PSR-12 rules that are too strict for this project -->
+    <rule ref="PSR12.Classes.OpeningBraceSpace">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Custom rules for better code quality -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="120"/>
+            <property name="absoluteLineLimit" value="150"/>
+        </properties>
+    </rule>
+
+    <!-- Enforce strict types declaration -->
+    <rule ref="Generic.Files.ByteOrderMark"/>
+
+    <!-- Check for unused function parameters -->
+    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"/>
+
+    <!-- Enforce consistent naming -->
+    <rule ref="PSR1.Classes.ClassDeclaration"/>
+    <rule ref="PSR1.Methods.CamelCapsMethodName"/>
+
+    <!-- Exclude vendor directory -->
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>node_modules/*</exclude-pattern>
+
+    <!-- Include source files -->
+    <file>src/</file>
+    <file>tests/</file>
+
+    <!-- Show progress -->
+    <arg value="p"/>
+    <arg name="colors"/>
+
+    <!-- Show source codes in all reports -->
+    <arg value="s"/>
+
+    <!-- Show sniff codes in all reports -->
+    <arg value="n"/>
+</ruleset> 

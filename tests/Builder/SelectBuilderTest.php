@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Builder;
 
@@ -34,7 +36,7 @@ class SelectBuilderTest extends TestCase
             ->willReturn('SQL_SELECT');
 
         $builder = new SelectBuilder('users', $compiler);
-        $builder->select('id','name')->where('id = ?',1);
+        $builder->select('id', 'name')->where('id = ?', 1);
         [$sql, $bindings] = $builder->build();
 
         $this->assertSame('SQL_SELECT', $sql);

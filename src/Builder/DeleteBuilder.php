@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Builder;
@@ -11,11 +12,11 @@ class DeleteBuilder extends AbstractBuilder implements
     JoinCapable,
     ExecutableCapable
 {
-    public const TYPE = 'Delete';
-
     use WhereTrait;
     use JoinTrait;
     use ExecutableTrait;
+
+    public const TYPE = 'Delete';
 
     protected function doBuild(): array
     {

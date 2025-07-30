@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Clause;
@@ -13,13 +14,12 @@ final readonly class JoinClause implements ClauseInterface
     public const TYPE = ClausePriority::JOIN;
 
     public function __construct(
-        private string            $type,
-        private TableIdentifier   $table,
-        private string            $on,
-        private array             $bindings = [],
+        private string $type,
+        private TableIdentifier $table,
+        private string $on,
+        private array $bindings = [],
         private ?GrammarInterface $grammar = null
-    )
-    {
+    ) {
     }
 
     public function compileClause(): string
@@ -30,7 +30,7 @@ final readonly class JoinClause implements ClauseInterface
         if ($this->grammar) {
             $pattern = '/\b([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\b/';
 
-            $onCondition = preg_replace_callback($pattern, function($matches) {
+            $onCondition = preg_replace_callback($pattern, function ($matches) {
                 return $this->grammar->wrapIdentifier($matches[0]);
             }, $onCondition);
         }

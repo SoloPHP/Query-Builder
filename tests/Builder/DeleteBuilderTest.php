@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Builder;
 
@@ -27,7 +29,7 @@ class DeleteBuilderTest extends TestCase
         $compiler->method('compileDelete')->willReturn('SQL_DELETE');
         $builder = new DeleteBuilder('users', $compiler);
 
-        $builder->where('a = ?',1)->where('b = ?',2);
+        $builder->where('a = ?', 1)->where('b = ?', 2);
         [$sql, $bindings] = $builder->build();
 
         $this->assertSame('SQL_DELETE', $sql);

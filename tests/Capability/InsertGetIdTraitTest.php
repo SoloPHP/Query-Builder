@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Capability;
 
@@ -32,7 +34,7 @@ class InsertGetIdTraitTest extends TestCase
         $this->mockExecutor->expects($this->once())
             ->method('query')
             ->with(
-                $this->callback(function($sql) {
+                $this->callback(function ($sql) {
                     return strpos($sql, 'INSERT INTO `users`') !== false;
                 }),
                 $this->equalTo(['John Doe', 'john@example.com'])
@@ -63,7 +65,7 @@ class InsertGetIdTraitTest extends TestCase
         $this->mockExecutor->expects($this->once())
             ->method('query')
             ->with(
-                $this->callback(function($sql) {
+                $this->callback(function ($sql) {
                     return strpos($sql, 'INSERT INTO `users`') !== false;
                 }),
                 $this->equalTo(['John Doe', 'john@example.com'])
@@ -94,7 +96,7 @@ class InsertGetIdTraitTest extends TestCase
         $this->mockExecutor->expects($this->once())
             ->method('query')
             ->with(
-                $this->callback(function($sql) {
+                $this->callback(function ($sql) {
                     return strpos($sql, 'INSERT INTO `users`') !== false;
                 }),
                 $this->equalTo(['John Doe', 'john@example.com'])

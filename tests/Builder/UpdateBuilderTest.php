@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Tests\Builder;
 
@@ -14,7 +16,7 @@ class UpdateBuilderTest extends TestCase
         $compiler->method('compileUpdate')->willReturn('SQL_UPDATE');
         $builder = new UpdateBuilder('users', $compiler);
 
-        $builder->set('name','Alice')->set('age',20);
+        $builder->set('name', 'Alice')->set('age', 20);
         [$sql, $bindings] = $builder->build();
 
         $this->assertSame('SQL_UPDATE', $sql);
@@ -27,7 +29,7 @@ class UpdateBuilderTest extends TestCase
         $compiler->method('compileUpdate')->willReturn('SQL_UPDATE');
         $builder = new UpdateBuilder('users', $compiler);
 
-        $builder->set('name','Alice')->set('age',20)->where('id = ?',5);
+        $builder->set('name', 'Alice')->set('age', 20)->where('id = ?', 5);
         [$sql, $bindings] = $builder->build();
 
         $this->assertSame('SQL_UPDATE', $sql);

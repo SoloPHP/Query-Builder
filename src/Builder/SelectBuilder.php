@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Builder;
@@ -40,8 +41,6 @@ class SelectBuilder extends AbstractBuilder implements
     ResultCapable,
     WhenCapable
 {
-    public const TYPE = 'Select';
-
     use WhereTrait;
     use JoinTrait;
     use GroupByTrait;
@@ -51,6 +50,8 @@ class SelectBuilder extends AbstractBuilder implements
     use SelectionTrait;
     use ResultTrait;
     use WhenTrait;
+
+    public const TYPE = 'Select';
 
     protected ?CacheManager $cacheManager = null;
 

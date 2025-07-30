@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Condition;
@@ -65,7 +66,7 @@ final class ConditionBuilder
             foreach ($matches as $match) {
                 $fullMatch = $match[0];
                 if (!$this->isInsideQuotes($expr, strpos($expr, $fullMatch))) {
-                $wrapped = $this->grammar->wrapIdentifier($fullMatch);
+                    $wrapped = $this->grammar->wrapIdentifier($fullMatch);
                     $expr = str_replace($fullMatch, $wrapped, $expr);
                 }
             }

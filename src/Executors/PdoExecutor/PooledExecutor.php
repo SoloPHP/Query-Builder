@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Solo\QueryBuilder\Executors\PdoExecutor;
 
@@ -18,7 +20,8 @@ final class PooledExecutor implements ExecutorInterface
     public function __construct(
         private readonly ConnectionPoolInterface $pool,
         private int $defaultFetch = PDO::FETCH_ASSOC
-    ) {}
+    ) {
+    }
 
     public function query(string $sql, array $bindings = []): self
     {
