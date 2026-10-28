@@ -1,6 +1,7 @@
 {
   "name": "solophp/query-builder",
   "description": "A lightweight, fluent SQL query builder for PHP",
+  "abandoned": "doctrine/dbal",
   "type": "library",
   "license": "MIT",
   "authors": [

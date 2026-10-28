@@ -1,5 +1,8 @@
 # Solo PHP Query Builder
 
+> [!WARNING]
+> **Abandoned.** This package is no longer maintained and gets no fixes. Use [Doctrine DBAL](https://www.doctrine-project.org/projects/dbal.html) instead, with [solophp/repository](https://solophp.github.io/Repository/) for typed repositories. The current Solo packages are listed at [solophp.github.io](https://solophp.github.io/packages.html).
+
 A lightweight and flexible SQL query builder for PHP 8.2+ with support for multiple SQL dialects and connection pooling.
 
 [![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)](https://github.com/solophp/query-builder)
